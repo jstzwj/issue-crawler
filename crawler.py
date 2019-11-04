@@ -41,11 +41,11 @@ def get_users(node):
     return users
 
 def get_labels(node):
-    labels = node.xpath('.//span[contains(@class, "IssueLabel")]/text()')
+    labels = node.xpath('.//span[contains(@class, "IssueLabel")]/a/text()')
     return labels
 
 def get_datetime(node):
-    dt = node.xpath('.//a[@class="link-gray js-timestamp"]/relative-time/@datetime')
+    dt = node.xpath('.//relative-time/@datetime')
     if len(dt) > 0:
         return datetime.datetime.strptime(dt[0], '%Y-%m-%dT%H:%M:%SZ')
     else:
@@ -63,20 +63,20 @@ class Crawler(object):
 
     def request_page(self, url):
         html_text = requests.get(url).text
-        html = etree.HTML(html_text)
-        return html
+        html_root = etree.HTML(html_text)
+        return html_root
 
     def save_item(self, item):
         self.file.write(json.dumps(item, cls=DateTimeEncoder) + "\n")
 
     def get_issue(self, url, meta):
-        html = self.request_page(url)
+        html_root = self.request_page(url)
 
         issue_item = {}
         issue_item['type'] = 'issue'
         
         # get panel
-        issue_panel = html.xpath('//div[@class="repository-content "]//div[@id="show_issue"]')
+        issue_panel = html_root.xpath('//div[@class="repository-content "]//div[@id="show_issue"]')
         if len(issue_panel) > 0:
             issue_panel = issue_panel[0]
         else:
@@ -148,11 +148,11 @@ class Crawler(object):
             timeline_item['time'] = get_datetime(comment_header)
             
             # comment body
-            comment_body = issue_comment_item.xpath('.//td[contains(@class,"comment-body")]/node()')
+            comment_body = issue_comment_item.xpath('.//td[contains(@class,"comment-body")]')
             if len(comment_body) > 0:
                 comment_body = comment_body[0]
-
-            timeline_item['comment'] = comment_body
+            
+            timeline_item['comment'] = etree.tostring(comment_body, encoding='utf-8').decode(encoding='utf-8')
 
             timeline_item['item_type'] = 'comment'
             issue_item['timeline'].append(timeline_item)
@@ -187,11 +187,11 @@ class Crawler(object):
                 timeline_item['time'] = datetime.datetime.strptime(comment_time, '%Y-%m-%dT%H:%M:%SZ')
                 
                 # comment body
-                comment_body = issue_comment_item.xpath('.//td[contains(@class,"comment-body")]/node()')
+                comment_body = issue_comment_item.xpath('.//td[contains(@class,"comment-body")]')
                 if len(comment_body) > 0:
                     comment_body = comment_body[0]
 
-                timeline_item['comment'] = comment_body
+                timeline_item['comment'] = etree.tostring(comment_body, encoding='utf-8').decode(encoding='utf-8')
 
                 timeline_item['item_type'] = 'comment'
                 issue_item['timeline'].append(timeline_item)
@@ -207,30 +207,30 @@ class Crawler(object):
                     timeline_item['labels'] = get_labels(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'add_label'
-                
-                # assign task
-                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "assigned")]/parent::div')) > 0:
-                    author = get_authors(each_timeline_item)
-                    timeline_item['author'] = author
-                    users = get_users(each_timeline_item)
-                    timeline_item['assignee'] = users[0]
-                    timeline_item['time'] = get_datetime(each_timeline_item)
-                    timeline_item['item_type'] = 'assign_user'
+
                 # self-assigned
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "self-assigned this")]/parent::div')) > 0:
-                    author = get_authors(each_timeline_item)
+                    author = get_author(each_timeline_item)
                     timeline_item['author'] = author
                     timeline_item['time'] = get_datetime(each_timeline_item)
-                    timeline_item['item_type'] = 'change_assignees'
+                    timeline_item['item_type'] = 'assign_self'
                 # assign and unassign task
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "and unassigned")]/parent::div')) > 0:
-                    author = get_authors(each_timeline_item)
+                    author = get_author(each_timeline_item)
                     timeline_item['author'] = author
                     users = get_users(each_timeline_item)
                     timeline_item['assignee'] = users[0]
                     timeline_item['unassignee'] = users[1]
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'change_assignees'
+                # assign task
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "assigned")]/parent::div')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    users = get_users(each_timeline_item)
+                    timeline_item['assignee'] = users[0]
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'assign_user'
                 
                 issue_item['timeline'].append(timeline_item)
 
@@ -238,10 +238,10 @@ class Crawler(object):
         
 
     def get_issue_page(self, url, meta):
-        html = self.request_page(url)
+        html_root = self.request_page(url)
 
         # get issues
-        issue_panel = html.xpath('//div[@aria-label="Issues"]/div/div')
+        issue_panel = html_root.xpath('//div[@aria-label="Issues"]/div/div')
         for each_issue in issue_panel:
             issue_url = each_issue.xpath('.//a[@data-hovercard-type="issue"]/@href')
             if len(issue_url) > 0:
