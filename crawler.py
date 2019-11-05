@@ -44,6 +44,21 @@ def get_labels(node):
     labels = node.xpath('.//span[contains(@class, "IssueLabel")]/a/text()')
     return labels
 
+def get_issue(node):
+    issue_item = node.xpath('.//a[@data-hovercard-type="issue"]/@href')
+    if len(issue_item) > 0:
+        return issue_item[0]
+    else:
+        return None
+
+def get_issues(node):
+    issue_items = node.xpath('.//a[@data-hovercard-type="issue"]/@href')
+    return issue_items
+
+def get_pulls(node):
+    issue_items = node.xpath('.//a[@data-hovercard-type="pull_request"]/@href')
+    return issue_items
+
 def get_datetime(node):
     dt = node.xpath('.//relative-time/@datetime')
     if len(dt) > 0:
@@ -231,6 +246,41 @@ class Crawler(object):
                     timeline_item['assignee'] = users[0]
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'assign_user'
+                # referenced this issue
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "referenced this issue")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    timeline_item['ref_issue'] = get_issue(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'ref_issue'
+                # changed the title
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "changed the title")]/parent::div')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    del_title = each_timeline_item.xpath('.//del/text()')
+                    if len(del_title) > 0:
+                        del_title = del_title[0]
+                    timeline_item['del_title'] = del_title
+                    ins_title = each_timeline_item.xpath('.//ins/text()')
+                    if len(ins_title) > 0:
+                        ins_title = ins_title[0]
+                    timeline_item['ins_title'] = ins_title
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'change_title'
+
+                # removed their assignment
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "removed their assignment")]/parent::div')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'remove_assignment'
+                # This was referenced
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "This was referenced")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    timeline_item['ref_pulls'] = get_pulls(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'referenced_this'
                 
                 issue_item['timeline'].append(timeline_item)
 
