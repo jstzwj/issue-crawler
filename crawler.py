@@ -59,6 +59,13 @@ def get_pulls(node):
     issue_items = node.xpath('.//a[@data-hovercard-type="pull_request"]/@href')
     return issue_items
 
+def get_pull(node):
+    pull_item = node.xpath('.//a[@data-hovercard-type="pull_request"]/@href')
+    if len(pull_item) > 0:
+        return pull_item[0]
+    else:
+        return None
+
 def get_datetime(node):
     dt = node.xpath('.//relative-time/@datetime')
     if len(dt) > 0:
@@ -250,7 +257,7 @@ class Crawler(object):
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "referenced this issue")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
                     author = get_author(each_timeline_item)
                     timeline_item['author'] = author
-                    timeline_item['ref_issue'] = get_issue(each_timeline_item)
+                    timeline_item['ref_pull'] = get_pull(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'ref_issue'
                 # changed the title
@@ -277,7 +284,6 @@ class Crawler(object):
                 # This was referenced
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "This was referenced")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
                     author = get_author(each_timeline_item)
-                    timeline_item['author'] = author
                     timeline_item['ref_pulls'] = get_pulls(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'referenced_this'
@@ -297,10 +303,18 @@ class Crawler(object):
             if len(issue_url) > 0:
                 issue_url = issue_url[0]
             self.requests_list.append(Request(f'https://github.com{issue_url}', self.get_issue))
-            
+
+        # next page
+        next_page = html_root.xpath('.//a[@class="next_page"]/@href')
+        if len(next_page) > 0:
+            next_page = next_page[0]
+            next_page = "https://github.com" + next_page
+
+            self.requests_list.append(Request(next_page, self.get_issue_page))
 
 
     def get_repo_issue(self, repo):
+        self.requests_list.append(Request(f'https://github.com{repo}/issues?q=is%3Aissue+is%3Aclosed', self.get_issue_page))
         self.requests_list.append(Request(f'https://github.com{repo}/issues', self.get_issue_page))
         try:
             while True:
