@@ -4,6 +4,7 @@ import datetime
 import json
 from lxml import etree
 
+proxies = {'http' : 'http://wangjun:8888@localhost:10805', 'https': 'https://wangjun:8888@localhost:10805'}
 
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, o):
@@ -84,7 +85,11 @@ class Crawler(object):
         self.file.close()
 
     def request_page(self, url):
-        html_text = requests.get(url).text
+        html_text = ""
+        try:
+            html_text = requests.get(url, timeout=15, proxies=proxies).text
+        except Exception as e:
+            print(e)
         html_root = etree.HTML(html_text)
         return html_root
 
@@ -287,6 +292,21 @@ class Crawler(object):
                     timeline_item['ref_pulls'] = get_pulls(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'referenced_this'
+                # close
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "closed this")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'close_this'
+                # reopen
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "reopened this")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'reopen_this'
+                # delete comment
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "deleted a comment")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'delete_comment'
                 
                 issue_item['timeline'].append(timeline_item)
 
@@ -319,7 +339,7 @@ class Crawler(object):
         try:
             while True:
                 if len(self.requests_list) > 0 :
-                    req = self.requests_list.pop()
+                    req = self.requests_list.pop(0)
                     req.crawl()
                 else:
                     break
