@@ -85,11 +85,7 @@ class Crawler(object):
         self.file.close()
 
     def request_page(self, url):
-        html_text = ""
-        try:
-            html_text = requests.get(url, timeout=15, proxies=proxies).text
-        except Exception as e:
-            print(e)
+        html_text = requests.get(url, timeout=15, proxies=proxies).text
         html_root = etree.HTML(html_text)
         return html_root
 
@@ -110,13 +106,11 @@ class Crawler(object):
             raise Exception('issue panel no found')
 
         # get issue discussion header
-
         issue_header = issue_panel.xpath('.//div[@id="partial-discussion-header"]')
         if len(issue_header) > 0:
             issue_header = issue_header[0]
         else:
             raise Exception('issue header no found')
-
         
         # title
         issue_title = issue_header.xpath('.//span[@class="js-issue-title"]/text()')
@@ -340,7 +334,11 @@ class Crawler(object):
             while True:
                 if len(self.requests_list) > 0 :
                     req = self.requests_list.pop(0)
-                    req.crawl()
+                    try:
+                        req.crawl()
+                    except Exception as e:
+                        print(e)
+                        self.requests_list.append(req)
                 else:
                     break
                 time.sleep(1)
