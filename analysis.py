@@ -1,10 +1,12 @@
 import json
 import time
 import user_info
+import pandas as pd
+import numpy as np
 
 if __name__ == "__main__":
 
-    activities = []
+    activities = pd.DataFrame(np.array([]),index=[],columns=['user_name','activity_type','time'])  
     users = user_info.User()
     # dump issues
     with open('items_grpc.txt', mode='r', encoding='utf-8') as f:
@@ -13,6 +15,8 @@ if __name__ == "__main__":
         for each_line in lines:
             issue = json.loads(each_line)
             for each_timeline in issue['timeline']:
+                if each_timeline == {}:
+                    continue
                 if each_timeline['item_type'] not in ['referenced_this',]:
                     users.save_user(each_timeline['author'])
 
@@ -21,7 +25,7 @@ if __name__ == "__main__":
             issue = json.loads(each_line)
             for each_timeline in issue['timeline']:
                 if each_timeline['item_type'] not in ['referenced_this',]:
-                    activities.append((each_timeline['author'], each_timeline['time'], each_timeline['item_type']))
+                    activities[activities.shape[0]] = [each_timeline['author'], each_timeline['time'], each_timeline['item_type']]
 
 
     # dump commits
@@ -35,8 +39,11 @@ if __name__ == "__main__":
             if u is not None:
                 user_name = u['user_name']
 
-            activity_time = time.strptime(int(commit['authored_date']), '%Y-%m-%dT%H:%M:%SZ')
+            t = time.localtime(int(commit['authored_date']))
+            activity_time = time.strftime('%Y-%m-%dT%H:%M:%SZ', t)
 
-            activities.append((user_name, activity_time, 'commit'))
+            activities[activities.shape[0]] = [user_name, activity_time, 'commit']
+
+    activities.to_csv("activities.csv",index=False,sep=',')
 
 

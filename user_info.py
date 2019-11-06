@@ -2,8 +2,11 @@ import requests
 import json
 import os
 import re
+import time
 from lxml import etree
 
+
+proxies = {'http' : 'http://localhost:10805', 'https': 'https://localhost:10805'}
 
 def first(elements_list):
     if elements_list is None:
@@ -60,7 +63,7 @@ def parse_profile(tree):
     if contributions_statistic is not None:
         contribs = strip_not_none(first(contributions_statistic.xpath('.//div/h2/text()')))
         if contribs is not None:
-            re_result = re.search('([0-9]+) contributions', contribs)
+            re_result = re.search('([0-9]+) contribution', contribs)
             ret['contribs'] = re_result.group(1)
 
         contrib_graph = first(contributions_statistic.xpath('.//div//svg[@class="js-calendar-graph-svg"]'))
@@ -78,6 +81,8 @@ def parse_profile(tree):
     if filter_list is not None:
         year_text = first(filter_list.xpath('.//li/a[@class="js-year-link filter-item px-3 mb-2 py-2 selected "]/text()'))
         ret['contrib_year'] = year_text
+
+    return ret
 
 class User(object):
     def __init__(self):
@@ -102,8 +107,8 @@ class User(object):
             with open(self.path + '.backup', 'w', encoding='utf-8') as f:
                 for each_user in self.users:
                     f.write(json.dumps(each_user) + '\n')
-        except:
-            print('save users fail')
+        except Exception as e:
+            print(f'save users fail :\n{str(e)}')
             return
 
         if os.path.exists(self.path):
@@ -111,11 +116,23 @@ class User(object):
         os.rename(self.path + '.backup', self.path)
 
     def save_user(self, login):
+        if login is None:
+            return
+        for each_user in self.users:
+            if each_user['user_name'] == login:
+                return each_user
         user_url = 'https://github.com/' + login
         print(f'get user: {user_url}')
-        html_text = requests.get('https://github.com/' + login, timeout=15).text
-        html_root = etree.HTML(html_text)
-        user = parse_profile(html_root)
+        user = None
+        while True:
+            try:
+                html_text = requests.get('https://github.com/' + login, proxies=proxies).text
+                html_root = etree.HTML(html_text)
+                user = parse_profile(html_root)
+                break
+            except Exception as e:
+                print(e)
+                time.sleep(1)
         self.users.append(user)
         return user
 
@@ -125,11 +142,7 @@ class User(object):
                 return each_user
 
         # no found
-        html_text = requests.get('https://github.com/' + login, timeout=15).text
-        html_root = etree.HTML(html_text)
-        user = parse_profile(html_root)
-        self.users.append(user)
-        return user
+        return save_user(login)
 
     def get_user_by_name(self, name):
         for each_user in self.users:

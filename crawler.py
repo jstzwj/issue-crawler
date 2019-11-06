@@ -4,7 +4,7 @@ import datetime
 import json
 from lxml import etree
 
-proxies = {'http' : 'http://wangjun:8888@localhost:10805', 'https': 'https://wangjun:8888@localhost:10805'}
+proxies = {'http' : 'http://localhost:10805', 'https': 'https://localhost:10805'}
 
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, o):
