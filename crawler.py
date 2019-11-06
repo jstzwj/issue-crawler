@@ -75,10 +75,10 @@ def get_datetime(node):
         return None
 
 class Crawler(object):
-    def __init__(self):
+    def __init__(self, path="items.txt"):
         super().__init__()
         self.requests_list = []
-        self.save_path = "items.txt"
+        self.save_path = path
         self.file = open(self.save_path, 'w', encoding='utf-8')
 
     def __del__(self):
@@ -351,5 +351,7 @@ class Crawler(object):
         print('crawl finish')
 
 if __name__ == "__main__":
-    crawler = Crawler()
-    crawler.get_repo_issue('/grpc/grpc')
+    crawler = Crawler('issue_deno.txt')
+    # crawler.get_repo_issue('/grpc/grpc')
+    crawler.get_repo_issue('/denoland/deno')
+    

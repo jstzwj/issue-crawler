@@ -1,12 +1,14 @@
 import json
 import time
 import user_info
+import csv
 import pandas as pd
 import numpy as np
 
 if __name__ == "__main__":
 
-    activities = pd.DataFrame(np.array([]),index=[],columns=['user_name','activity_type','time'])  
+    activities = []
+    
     users = user_info.User()
     # dump issues
     with open('items_grpc.txt', mode='r', encoding='utf-8') as f:
@@ -24,8 +26,10 @@ if __name__ == "__main__":
         for each_line in lines:
             issue = json.loads(each_line)
             for each_timeline in issue['timeline']:
+                if each_timeline == {}:
+                    continue
                 if each_timeline['item_type'] not in ['referenced_this',]:
-                    activities[activities.shape[0]] = [each_timeline['author'], each_timeline['time'], each_timeline['item_type']]
+                    activities.append([each_timeline['author'], each_timeline['time'], each_timeline['item_type']])
 
 
     # dump commits
@@ -42,8 +46,15 @@ if __name__ == "__main__":
             t = time.localtime(int(commit['authored_date']))
             activity_time = time.strftime('%Y-%m-%dT%H:%M:%SZ', t)
 
-            activities[activities.shape[0]] = [user_name, activity_time, 'commit']
+            activities.append([user_name, activity_time, 'commit'])
 
-    activities.to_csv("activities.csv",index=False,sep=',')
+    # write to csv
+    with open("activities.csv","w", newline='') as csvfile:
+        writer = csv.writer(csvfile)
+
+        #先写入columns_name
+        writer.writerow(["user_name","time","type"])
+        writer.writerows(activities)
+
 
 
