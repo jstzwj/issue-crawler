@@ -85,8 +85,8 @@ def parse_profile(tree):
     return ret
 
 class User(object):
-    def __init__(self):
-        self.path = 'user.txt'
+    def __init__(self, path = 'user.txt'):
+        self.path = path
         self.users = []
 
         self.load_from_file()
@@ -127,6 +127,8 @@ class User(object):
         while True:
             try:
                 html_text = requests.get('https://github.com/' + login, proxies=proxies).text
+                if html_text == 'Not Found':
+                    return {}
                 html_root = etree.HTML(html_text)
                 user = parse_profile(html_root)
                 break

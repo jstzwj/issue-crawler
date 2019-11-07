@@ -5,13 +5,15 @@ import csv
 import pandas as pd
 import numpy as np
 
+repo_name = 'deno'
+
 if __name__ == "__main__":
 
     activities = []
     
-    users = user_info.User()
+    users = user_info.User(path=f'user_{repo_name}.txt')
     # dump issues
-    with open('items_grpc.txt', mode='r', encoding='utf-8') as f:
+    with open(f'issue_{repo_name}.txt', mode='r', encoding='utf-8') as f:
         lines = f.readlines()
         # fetch all user info
         for each_line in lines:
@@ -33,7 +35,7 @@ if __name__ == "__main__":
 
 
     # dump commits
-    with open('commits_grpc.txt', mode='r', encoding='utf-8') as f:
+    with open(f'commits_{repo_name}.txt', mode='r', encoding='utf-8') as f:
         lines = f.readlines()
         # fetch all commits
         for each_line in lines:
@@ -49,7 +51,7 @@ if __name__ == "__main__":
             activities.append([user_name, activity_time, 'commit'])
 
     # write to csv
-    with open("activities.csv","w", newline='') as csvfile:
+    with open(f"activities_{repo_name}.csv","w", newline='') as csvfile:
         writer = csv.writer(csvfile)
 
         #先写入columns_name
