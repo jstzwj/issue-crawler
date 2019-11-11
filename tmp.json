@@ -1,0 +1,70 @@
+{
+    "type": "issue",
+    "title": "grpc with gevent",
+    "id": 20931,
+    "status": "Closed",
+    "timeline": [
+        {
+            "author": "rienafairefr",
+            "time": "2019-11-05T08:48:06",
+            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p>I think this is the same thing as <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load issue title\" data-id=\"125118861\" data-permission-text=\"Issue title is private\" data-url=\"https://github.com/grpc/grpc/issues/4629\" data-hovercard-type=\"issue\" data-hovercard-url=\"/grpc/grpc/issues/4629/hovercard\" href=\"https://github.com/grpc/grpc/issues/4629\">#4629</a>,</p>\n<h3>What version of gRPC and what language are you using?</h3>\n<p>grpc came through the firestore client<br/>\n<code>google-cloud-firestore==1.5.0</code><br/>\n<code>grpcio==1.24.3</code></p>\n<h3>What operating system (Linux, Windows,...) and version?</h3>\n<p>Linux, inside a Docker container</p>\n<h3>What runtime / compiler are you using (e.g. python version or version of gcc)</h3>\n<p>Python 3.5</p>\n<h3>What did you do?</h3>\n<p>I used the firestore client inside a Flask server which used <code>gevent==1.4.0</code>, and I had a weird failure, where every second call to an endpoint (that queried firestore), the query would be stuck waiting forever.</p>\n<h3>What did you expect to see?</h3>\n<p>firestore queries not waiting forever</p>\n<h3>What did you see instead?</h3>\n<p>When stuck, grpc would show (I acquired these with GRPC_TRACE), every 200 ms:</p>\n<pre><code>I1104 22:07:01.491258263    9276 completion_queue.cc:960]    grpc_completion_queue_next(cq=0x3399620, deadline=gpr_timespec { tv_sec: 1572901621, tv_nsec: 691232769, clock_type: 1 }, reserved=(nil))\n</code></pre>\n<p>I'm not sure about the thread/process situation</p>\n<p>I changed the async mode to using <code>eventlet</code> instead of <code>gevent</code> and the problem went away, but I guess this failure mode might be interesting for people interested in grpc+gevent</p>\n      </td>\n    ",
+            "item_type": "comment"
+        },
+        {
+            "author": "rienafairefr",
+            "labels": [
+                "kind/bug",
+                "priority/P2"
+            ],
+            "time": "2019-11-05T08:48:06",
+            "item_type": "add_label"
+        },
+        {
+            "author": "rienafairefr",
+            "assignee": "sheenaqotj",
+            "time": "2019-11-05T08:48:06",
+            "item_type": "assign_user"
+        },
+        {
+            "author": "srini100",
+            "assignee": "gnossen",
+            "unassignee": "sheenaqotj",
+            "time": "2019-11-05T18:34:31",
+            "item_type": "change_assignees"
+        },
+        {
+            "author": "gnossen",
+            "labels": [
+                "lang/Python",
+                "area/concurrency"
+            ],
+            "time": "2019-11-05T18:35:24",
+            "item_type": "add_label"
+        },
+        {
+            "author": "rienafairefr",
+            "time": "2019-11-05T08:48:06",
+            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p>I think this is the same thing as <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load issue title\" data-id=\"125118861\" data-permission-text=\"Issue title is private\" data-url=\"https://github.com/grpc/grpc/issues/4629\" data-hovercard-type=\"issue\" data-hovercard-url=\"/grpc/grpc/issues/4629/hovercard\" href=\"https://github.com/grpc/grpc/issues/4629\">#4629</a>,</p>\n<h3>What version of gRPC and what language are you using?</h3>\n<p>grpc came through the firestore client<br/>\n<code>google-cloud-firestore==1.5.0</code><br/>\n<code>grpcio==1.24.3</code></p>\n<h3>What operating system (Linux, Windows,...) and version?</h3>\n<p>Linux, inside a Docker container</p>\n<h3>What runtime / compiler are you using (e.g. python version or version of gcc)</h3>\n<p>Python 3.5</p>\n<h3>What did you do?</h3>\n<p>I used the firestore client inside a Flask server which used <code>gevent==1.4.0</code>, and I had a weird failure, where every second call to an endpoint (that queried firestore), the query would be stuck waiting forever.</p>\n<h3>What did you expect to see?</h3>\n<p>firestore queries not waiting forever</p>\n<h3>What did you see instead?</h3>\n<p>When stuck, grpc would show (I acquired these with GRPC_TRACE), every 200 ms:</p>\n<pre><code>I1104 22:07:01.491258263    9276 completion_queue.cc:960]    grpc_completion_queue_next(cq=0x3399620, deadline=gpr_timespec { tv_sec: 1572901621, tv_nsec: 691232769, clock_type: 1 }, reserved=(nil))\n</code></pre>\n<p>I'm not sure about the thread/process situation</p>\n<p>I changed the async mode to using <code>eventlet</code> instead of <code>gevent</code> and the problem went away, but I guess this failure mode might be interesting for people interested in grpc+gevent</p>\n      </td>\n    ",
+            "item_type": "comment"
+        },
+        {
+            "author": "rienafairefr",
+            "time": "2019-11-05T08:48:06",
+            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p>I think this is the same thing as <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load issue title\" data-id=\"125118861\" data-permission-text=\"Issue title is private\" data-url=\"https://github.com/grpc/grpc/issues/4629\" data-hovercard-type=\"issue\" data-hovercard-url=\"/grpc/grpc/issues/4629/hovercard\" href=\"https://github.com/grpc/grpc/issues/4629\">#4629</a>,</p>\n<h3>What version of gRPC and what language are you using?</h3>\n<p>grpc came through the firestore client<br/>\n<code>google-cloud-firestore==1.5.0</code><br/>\n<code>grpcio==1.24.3</code></p>\n<h3>What operating system (Linux, Windows,...) and version?</h3>\n<p>Linux, inside a Docker container</p>\n<h3>What runtime / compiler are you using (e.g. python version or version of gcc)</h3>\n<p>Python 3.5</p>\n<h3>What did you do?</h3>\n<p>I used the firestore client inside a Flask server which used <code>gevent==1.4.0</code>, and I had a weird failure, where every second call to an endpoint (that queried firestore), the query would be stuck waiting forever.</p>\n<h3>What did you expect to see?</h3>\n<p>firestore queries not waiting forever</p>\n<h3>What did you see instead?</h3>\n<p>When stuck, grpc would show (I acquired these with GRPC_TRACE), every 200 ms:</p>\n<pre><code>I1104 22:07:01.491258263    9276 completion_queue.cc:960]    grpc_completion_queue_next(cq=0x3399620, deadline=gpr_timespec { tv_sec: 1572901621, tv_nsec: 691232769, clock_type: 1 }, reserved=(nil))\n</code></pre>\n<p>I'm not sure about the thread/process situation</p>\n<p>I changed the async mode to using <code>eventlet</code> instead of <code>gevent</code> and the problem went away, but I guess this failure mode might be interesting for people interested in grpc+gevent</p>\n      </td>\n    ",
+            "item_type": "comment"
+        },
+        {
+            "author": "rienafairefr",
+            "time": "2019-11-05T08:48:06",
+            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p>I think this is the same thing as <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load issue title\" data-id=\"125118861\" data-permission-text=\"Issue title is private\" data-url=\"https://github.com/grpc/grpc/issues/4629\" data-hovercard-type=\"issue\" data-hovercard-url=\"/grpc/grpc/issues/4629/hovercard\" href=\"https://github.com/grpc/grpc/issues/4629\">#4629</a>,</p>\n<h3>What version of gRPC and what language are you using?</h3>\n<p>grpc came through the firestore client<br/>\n<code>google-cloud-firestore==1.5.0</code><br/>\n<code>grpcio==1.24.3</code></p>\n<h3>What operating system (Linux, Windows,...) and version?</h3>\n<p>Linux, inside a Docker container</p>\n<h3>What runtime / compiler are you using (e.g. python version or version of gcc)</h3>\n<p>Python 3.5</p>\n<h3>What did you do?</h3>\n<p>I used the firestore client inside a Flask server which used <code>gevent==1.4.0</code>, and I had a weird failure, where every second call to an endpoint (that queried firestore), the query would be stuck waiting forever.</p>\n<h3>What did you expect to see?</h3>\n<p>firestore queries not waiting forever</p>\n<h3>What did you see instead?</h3>\n<p>When stuck, grpc would show (I acquired these with GRPC_TRACE), every 200 ms:</p>\n<pre><code>I1104 22:07:01.491258263    9276 completion_queue.cc:960]    grpc_completion_queue_next(cq=0x3399620, deadline=gpr_timespec { tv_sec: 1572901621, tv_nsec: 691232769, clock_type: 1 }, reserved=(nil))\n</code></pre>\n<p>I'm not sure about the thread/process situation</p>\n<p>I changed the async mode to using <code>eventlet</code> instead of <code>gevent</code> and the problem went away, but I guess this failure mode might be interesting for people interested in grpc+gevent</p>\n      </td>\n    ",
+            "item_type": "comment"
+        },
+        {
+            "author": "gnossen",
+            "time": "2019-11-05T20:47:42",
+            "item_type": "close_this"
+        }
+    ]
+}
+
+冷启动
