@@ -92,7 +92,7 @@ class Crawler(object):
     def save_item(self, item):
         self.file.write(json.dumps(item, cls=DateTimeEncoder) + "\n")
 
-    def get_issue(self, url, meta):
+    def parse_issue(self, url, meta):
         html_root = self.request_page(url)
 
         issue_item = {}
@@ -222,8 +222,18 @@ class Crawler(object):
 
                 timelineitem_body = each_timeline_item.xpath('.//div[@class="TimelineItem-body"]')
 
-                # add label
-                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "added")]/parent::div')) > 0:
+                # label add and remove
+                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added") and contains(., "and removed") and contains(., "labels")]')) > 0:
+                    timeline_item['author'] = get_author(each_timeline_item)
+                    labels_added = each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "removed")]/preceding-sibling::span[contains(@class, "IssueLabel")]/a/text()')
+                    timeline_item['labels_added'] = get_labels(each_timeline_item)
+                    labels_removed = each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "removed")]/following-sibling::span[contains(@class, "IssueLabel")]/a/text()')
+                    timeline_item['labels_removed'] = get_labels(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'add_and_remove_label'
+
+                # label add
+                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added") and contains(., "labels")]')) > 0:
                     timeline_item['author'] = get_author(each_timeline_item)
                     timeline_item['labels'] = get_labels(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
@@ -244,6 +254,14 @@ class Crawler(object):
                     timeline_item['unassignee'] = users[1]
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'change_assignees'
+                # unassign task
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "unassigned")]/parent::div')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    users = get_users(each_timeline_item)
+                    timeline_item['assignee'] = users[0]
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'unassign_user'
                 # assign task
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "assigned")]/parent::div')) > 0:
                     author = get_author(each_timeline_item)
@@ -256,6 +274,7 @@ class Crawler(object):
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "referenced this issue")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
                     author = get_author(each_timeline_item)
                     timeline_item['author'] = author
+                    timeline_item['ref_issue'] = get_issue(each_timeline_item)
                     timeline_item['ref_pull'] = get_pull(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'ref_issue'
@@ -304,6 +323,47 @@ class Crawler(object):
                     timeline_item['author'] = author
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'delete_comment'
+                # lock
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "locked as")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    reason = each_timeline_item.xpath('.//strong/text()')
+                    if len(reason) > 0:
+                        reason = reason[0]
+                    timeline_item['reason'] = reason
+                    timeline_item['item_type'] = 'lock_issue'
+                # kanban add
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "added this to")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    column = each_timeline_item.xpath('.//strong/text()')
+                    if len(column) > 0:
+                        column = column[0]
+                    timeline_item['column'] = column
+                    project_url = each_timeline_item.xpath('.//a[@data-skip-pjax]/@href')
+                    if len(project_url) > 0:
+                        project_url = project_url[0]
+                    timeline_item['project_url'] = project_url
+                    timeline_item['item_type'] = 'add_project'
+                # kanban move
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "moved this from")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+
+                    project_url = each_timeline_item.xpath('.//a[@data-skip-pjax]/@href')
+                    if len(project_url) > 0:
+                        project_url = project_url[0]
+                    timeline_item['project_url'] = project_url
+
+                    columns = each_timeline_item.xpath('.//strong/text()')
+                    if len(columns) >= 1:
+                        timeline_item['column_from'] = columns[0]
+                    if len(columns) >= 2:
+                        timeline_item['column_to'] = columns[1]
+                    
+                    timeline_item['item_type'] = 'move_project'
                 
                 issue_item['timeline'].append(timeline_item)
 
@@ -319,7 +379,7 @@ class Crawler(object):
             issue_url = each_issue.xpath('.//a[@data-hovercard-type="issue"]/@href')
             if len(issue_url) > 0:
                 issue_url = issue_url[0]
-            self.requests_list.append(Request(f'https://github.com{issue_url}', self.get_issue))
+            self.requests_list.append(Request(f'https://github.com{issue_url}', self.parse_issue))
 
         # next page
         next_page = html_root.xpath('.//a[@class="next_page"]/@href')
