@@ -305,6 +305,12 @@ class Crawler(object):
                     timeline_item['ref_pulls'] = get_pulls(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'referenced_this'
+                # referenced a pull request that will close this issue
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "referenced a pull request that will")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
+                    # author = get_author(each_timeline_item)
+                    timeline_item['ref_pulls'] = get_pulls(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'referenced_to_pull'
                 # close
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "closed this")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
                     author = get_author(each_timeline_item)
@@ -364,6 +370,40 @@ class Crawler(object):
                         timeline_item['column_to'] = columns[1]
                     
                     timeline_item['item_type'] = 'move_project'
+                # milestones modified
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "modified the milestone")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['milestones'] = each_timeline_item.xpath('.//a[@class="link-gray-dark text-bold"]/@href')
+                    timeline_item['item_type'] = 'modify_milestones'
+                # add a commit
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added a commit") and contains(., "that referenced") and contains(., "this issue")]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['commits'] = []
+                    commits = each_timeline_item.xpath('.//div[@class="js-details-container Details js-socket-channel js-updatable-content"]')
+                    for each_commit in commits:
+                        commit = {}
+                        author = each_timeline_item.xpath('.//div[@class="AvatarStack-body"]/@aria-label')
+                        if len(author) > 0:
+                            author = author[0]
+                        commit['author'] = author
+
+                        message = each_timeline_item.xpath('.//div[@class="commit-message pr-1 flex-auto min-width-0"]/code/a/text()')
+                        if len(message) > 0:
+                            message = message[0]
+                        commit['message'] = message
+
+                        commit_url = each_timeline_item.xpath('.//div[@class="text-right"]/code/a/@href')
+                        if len(commit_url) > 0:
+                            commit_url = commit_url[0]
+                        commit['commit_url'] = commit_url
+
+                        timeline_item['commits'].append(commit)
+                    
+                    timeline_item['item_type'] = 'add_commit'
                 
                 issue_item['timeline'].append(timeline_item)
 
