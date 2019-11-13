@@ -190,7 +190,7 @@ class Crawler(object):
             for each_timeline_item in comment_items:
                 timeline_item = {}
                 # header
-                comment_header = issue_comment_item.xpath('.//div[contains(@class,"timeline-comment-header")]')
+                comment_header = each_timeline_item.xpath('.//div[contains(@class,"timeline-comment-header")]')
                 if len(comment_header) > 0:
                     comment_header = comment_header[0]
                 
@@ -208,7 +208,7 @@ class Crawler(object):
                 timeline_item['time'] = datetime.datetime.strptime(comment_time, '%Y-%m-%dT%H:%M:%SZ')
                 
                 # comment body
-                comment_body = issue_comment_item.xpath('.//td[contains(@class,"comment-body")]')
+                comment_body = each_timeline_item.xpath('.//td[contains(@class,"comment-body")]')
                 if len(comment_body) > 0:
                     comment_body = comment_body[0]
 
@@ -232,8 +232,15 @@ class Crawler(object):
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'add_and_remove_label'
 
-                # label add
+                # add labels
                 if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added") and contains(., "labels")]')) > 0:
+                    timeline_item['author'] = get_author(each_timeline_item)
+                    timeline_item['labels'] = get_labels(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'add_label'
+
+                # add a label
+                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added") and contains(., "label")]')) > 0:
                     timeline_item['author'] = get_author(each_timeline_item)
                     timeline_item['labels'] = get_labels(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
@@ -339,6 +346,15 @@ class Crawler(object):
                         reason = reason[0]
                     timeline_item['reason'] = reason
                     timeline_item['item_type'] = 'lock_issue'
+                # milestone add
+                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added this to the") and contains(., "milestone")]')) > 0:
+                    timeline_item['author'] = get_author(each_timeline_item)
+                    milestone = each_timeline_item.xpath('.//a[@class="link-gray-dark text-bold"]/@href')
+                    if len(milestone) > 0:
+                        milestone = milestone[0]
+                    timeline_item['milestone'] = milestone
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'add_milestone'
                 # kanban add
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "added this to")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
                     author = get_author(each_timeline_item)
@@ -377,7 +393,7 @@ class Crawler(object):
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['milestones'] = each_timeline_item.xpath('.//a[@class="link-gray-dark text-bold"]/@href')
                     timeline_item['item_type'] = 'modify_milestones'
-                # add a commit
+                # add a commit (forked repo)
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added a commit") and contains(., "that referenced") and contains(., "this issue")]')) > 0:
                     author = get_author(each_timeline_item)
                     timeline_item['author'] = author
@@ -404,6 +420,33 @@ class Crawler(object):
                         timeline_item['commits'].append(commit)
                     
                     timeline_item['item_type'] = 'add_commit'
+                # push a commit (self repo)
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "pushed a commit") and contains(., "that referenced") and contains(., "this issue")]')) > 0:
+                    author = get_author(each_timeline_item)
+                    timeline_item['author'] = author
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['commits'] = []
+                    commits = each_timeline_item.xpath('.//div[@class="js-details-container Details js-socket-channel js-updatable-content"]')
+                    for each_commit in commits:
+                        commit = {}
+                        author = each_timeline_item.xpath('.//div[@class="AvatarStack-body"]/@aria-label')
+                        if len(author) > 0:
+                            author = author[0]
+                        commit['author'] = author
+
+                        message = each_timeline_item.xpath('.//div[@class="commit-message pr-1 flex-auto min-width-0"]/code/a/text()')
+                        if len(message) > 0:
+                            message = message[0]
+                        commit['message'] = message
+
+                        commit_url = each_timeline_item.xpath('.//div[@class="text-right"]/code/a/@href')
+                        if len(commit_url) > 0:
+                            commit_url = commit_url[0]
+                        commit['commit_url'] = commit_url
+
+                        timeline_item['commits'].append(commit)
+                    
+                    timeline_item['item_type'] = 'push_commit'
                 
                 issue_item['timeline'].append(timeline_item)
 

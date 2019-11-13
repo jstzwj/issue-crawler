@@ -1,72 +1,46 @@
 {
     "type": "issue",
-    "title": "grpc with gevent",
-    "id": 20931,
+    "title": "Aliasing Imports and Modules",
+    "id": 3311,
     "status": "Closed",
     "timeline": [
         {
-            "author": "rienafairefr",
-            "time": "2019-11-05T08:48:06",
-            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p>I think this is the same thing as <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load issue title\" data-id=\"125118861\" data-permission-text=\"Issue title is private\" data-url=\"https://github.com/grpc/grpc/issues/4629\" data-hovercard-type=\"issue\" data-hovercard-url=\"/grpc/grpc/issues/4629/hovercard\" href=\"https://github.com/grpc/grpc/issues/4629\">#4629</a>,</p>\n<h3>What version of gRPC and what language are you using?</h3>\n<p>grpc came through the firestore client<br/>\n<code>google-cloud-firestore==1.5.0</code><br/>\n<code>grpcio==1.24.3</code></p>\n<h3>What operating system (Linux, Windows,...) and version?</h3>\n<p>Linux, inside a Docker container</p>\n<h3>What runtime / compiler are you using (e.g. python version or version of gcc)</h3>\n<p>Python 3.5</p>\n<h3>What did you do?</h3>\n<p>I used the firestore client inside a Flask server which used <code>gevent==1.4.0</code>, and I had a weird failure, where every second call to an endpoint (that queried firestore), the query would be stuck waiting forever.</p>\n<h3>What did you expect to see?</h3>\n<p>firestore queries not waiting forever</p>\n<h3>What did you see instead?</h3>\n<p>When stuck, grpc would show (I acquired these with GRPC_TRACE), every 200 ms:</p>\n<pre><code>I1104 22:07:01.491258263    9276 completion_queue.cc:960]    grpc_completion_queue_next(cq=0x3399620, deadline=gpr_timespec { tv_sec: 1572901621, tv_nsec: 691232769, clock_type: 1 }, reserved=(nil))\n</code></pre>\n<p>I'm not sure about the thread/process situation</p>\n<p>I changed the async mode to using <code>eventlet</code> instead of <code>gevent</code> and the problem went away, but I guess this failure mode might be interesting for people interested in grpc+gevent</p>\n      </td>\n    ",
+            "author": "Soremwar",
+            "time": "2019-11-10T02:20:05",
+            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p>This has probably cross your mind while in the early stages of development in Deno, but what about an alias standard for packages?</p>\n<p>If I wanna import say React into most of my files I may not wanna write its url into each one(gotta admit it's kinda ugly), so why not reference it once into a file that act as a synonim of it so i can use it into my project?</p>\n<p>First thoughts were something like this (not that it is any prettier but will do)</p>\n<p><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://user-images.githubusercontent.com/42647963/68537684-332e2180-0336-11ea-80aa-d756dce013c2.png\"><img src=\"https://user-images.githubusercontent.com/42647963/68537684-332e2180-0336-11ea-80aa-d756dce013c2.png\" alt=\"image\" style=\"max-width:100%;\"/></a></p>\n<p>This isn't really a feature but more of a standard for Deno development to maybe be included into the documentation now that 1.0 is coming close.</p>\n      </td>\n    ",
             "item_type": "comment"
         },
         {
-            "author": "rienafairefr",
-            "labels": [
-                "kind/bug",
-                "priority/P2"
-            ],
-            "time": "2019-11-05T08:48:06",
-            "item_type": "add_label"
-        },
-        {
-            "author": "rienafairefr",
-            "assignee": "sheenaqotj",
-            "time": "2019-11-05T08:48:06",
-            "item_type": "assign_user"
-        },
-        {
-            "author": "srini100",
-            "assignee": "gnossen",
-            "unassignee": "sheenaqotj",
-            "time": "2019-11-05T18:34:31",
-            "item_type": "change_assignees"
-        },
-        {
-            "author": "gnossen",
-            "labels": [
-                "lang/Python",
-                "area/concurrency"
-            ],
-            "time": "2019-11-05T18:35:24",
-            "item_type": "add_label"
-        },
-        {
-            "author": "rienafairefr",
-            "time": "2019-11-05T08:48:06",
-            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p>I think this is the same thing as <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load issue title\" data-id=\"125118861\" data-permission-text=\"Issue title is private\" data-url=\"https://github.com/grpc/grpc/issues/4629\" data-hovercard-type=\"issue\" data-hovercard-url=\"/grpc/grpc/issues/4629/hovercard\" href=\"https://github.com/grpc/grpc/issues/4629\">#4629</a>,</p>\n<h3>What version of gRPC and what language are you using?</h3>\n<p>grpc came through the firestore client<br/>\n<code>google-cloud-firestore==1.5.0</code><br/>\n<code>grpcio==1.24.3</code></p>\n<h3>What operating system (Linux, Windows,...) and version?</h3>\n<p>Linux, inside a Docker container</p>\n<h3>What runtime / compiler are you using (e.g. python version or version of gcc)</h3>\n<p>Python 3.5</p>\n<h3>What did you do?</h3>\n<p>I used the firestore client inside a Flask server which used <code>gevent==1.4.0</code>, and I had a weird failure, where every second call to an endpoint (that queried firestore), the query would be stuck waiting forever.</p>\n<h3>What did you expect to see?</h3>\n<p>firestore queries not waiting forever</p>\n<h3>What did you see instead?</h3>\n<p>When stuck, grpc would show (I acquired these with GRPC_TRACE), every 200 ms:</p>\n<pre><code>I1104 22:07:01.491258263    9276 completion_queue.cc:960]    grpc_completion_queue_next(cq=0x3399620, deadline=gpr_timespec { tv_sec: 1572901621, tv_nsec: 691232769, clock_type: 1 }, reserved=(nil))\n</code></pre>\n<p>I'm not sure about the thread/process situation</p>\n<p>I changed the async mode to using <code>eventlet</code> instead of <code>gevent</code> and the problem went away, but I guess this failure mode might be interesting for people interested in grpc+gevent</p>\n      </td>\n    ",
+            "author": "nayeemrmn",
+            "time": "2019-11-10T02:59:05",
+            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p><a class=\"user-mention\" data-hovercard-type=\"user\" data-hovercard-url=\"/hovercards?user_id=42647963\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"https://github.com/Soremwar\">@Soremwar</a> Read <a rel=\"nofollow\" href=\"https://deno.land/std/manual.md#linking-to-third-party-code\">https://deno.land/std/manual.md#linking-to-third-party-code</a>. It's already there.</p>\n      </td>\n    ",
             "item_type": "comment"
         },
         {
-            "author": "rienafairefr",
-            "time": "2019-11-05T08:48:06",
-            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p>I think this is the same thing as <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load issue title\" data-id=\"125118861\" data-permission-text=\"Issue title is private\" data-url=\"https://github.com/grpc/grpc/issues/4629\" data-hovercard-type=\"issue\" data-hovercard-url=\"/grpc/grpc/issues/4629/hovercard\" href=\"https://github.com/grpc/grpc/issues/4629\">#4629</a>,</p>\n<h3>What version of gRPC and what language are you using?</h3>\n<p>grpc came through the firestore client<br/>\n<code>google-cloud-firestore==1.5.0</code><br/>\n<code>grpcio==1.24.3</code></p>\n<h3>What operating system (Linux, Windows,...) and version?</h3>\n<p>Linux, inside a Docker container</p>\n<h3>What runtime / compiler are you using (e.g. python version or version of gcc)</h3>\n<p>Python 3.5</p>\n<h3>What did you do?</h3>\n<p>I used the firestore client inside a Flask server which used <code>gevent==1.4.0</code>, and I had a weird failure, where every second call to an endpoint (that queried firestore), the query would be stuck waiting forever.</p>\n<h3>What did you expect to see?</h3>\n<p>firestore queries not waiting forever</p>\n<h3>What did you see instead?</h3>\n<p>When stuck, grpc would show (I acquired these with GRPC_TRACE), every 200 ms:</p>\n<pre><code>I1104 22:07:01.491258263    9276 completion_queue.cc:960]    grpc_completion_queue_next(cq=0x3399620, deadline=gpr_timespec { tv_sec: 1572901621, tv_nsec: 691232769, clock_type: 1 }, reserved=(nil))\n</code></pre>\n<p>I'm not sure about the thread/process situation</p>\n<p>I changed the async mode to using <code>eventlet</code> instead of <code>gevent</code> and the problem went away, but I guess this failure mode might be interesting for people interested in grpc+gevent</p>\n      </td>\n    ",
+            "author": "rsp",
+            "time": "2019-11-11T17:08:39",
+            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p><a class=\"user-mention\" data-hovercard-type=\"user\" data-hovercard-url=\"/hovercards?user_id=42647963\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"https://github.com/Soremwar\">@Soremwar</a> a canonical way to do it is to use a single <code>deps.ts</code> file with all imports in one place (instead of one per dependency like in your example) and in other files import everything from there:</p>\n<div class=\"highlight highlight-source-ts\"><pre><span class=\"pl-k\">import</span> { <span class=\"pl-smi\">serve</span> } <span class=\"pl-k\">from</span> <span class=\"pl-s\"><span class=\"pl-pds\">'</span>./deps.ts<span class=\"pl-pds\">'</span></span>;\n<span class=\"pl-k\">import</span> { <span class=\"pl-smi\">somethingElse</span> } <span class=\"pl-k\">from</span> <span class=\"pl-s\"><span class=\"pl-pds\">'</span>./deps.ts<span class=\"pl-pds\">'</span></span>;</pre></div>\n<p>Or you can use import maps like I <a href=\"https://github.com/denoland/deno/issues/3268#issuecomment-551859728\" data-hovercard-type=\"issue\" data-hovercard-url=\"/denoland/deno/issues/3268/hovercard\">explained here</a> to have:</p>\n<div class=\"highlight highlight-source-ts\"><pre><span class=\"pl-k\">import</span> { <span class=\"pl-smi\">serve</span> } <span class=\"pl-k\">from</span> <span class=\"pl-s\"><span class=\"pl-pds\">'</span>std/http/server.ts<span class=\"pl-pds\">'</span></span>;</pre></div>\n<p>or:</p>\n<div class=\"highlight highlight-source-ts\"><pre><span class=\"pl-k\">import</span> { <span class=\"pl-smi\">serve</span> } <span class=\"pl-k\">from</span> <span class=\"pl-s\"><span class=\"pl-pds\">'</span>http/server.ts<span class=\"pl-pds\">'</span></span>;</pre></div>\n<p>or whatever prefix you use in your mappings.</p>\n      </td>\n    ",
             "item_type": "comment"
         },
         {
-            "author": "rienafairefr",
-            "time": "2019-11-05T08:48:06",
-            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p>I think this is the same thing as <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load issue title\" data-id=\"125118861\" data-permission-text=\"Issue title is private\" data-url=\"https://github.com/grpc/grpc/issues/4629\" data-hovercard-type=\"issue\" data-hovercard-url=\"/grpc/grpc/issues/4629/hovercard\" href=\"https://github.com/grpc/grpc/issues/4629\">#4629</a>,</p>\n<h3>What version of gRPC and what language are you using?</h3>\n<p>grpc came through the firestore client<br/>\n<code>google-cloud-firestore==1.5.0</code><br/>\n<code>grpcio==1.24.3</code></p>\n<h3>What operating system (Linux, Windows,...) and version?</h3>\n<p>Linux, inside a Docker container</p>\n<h3>What runtime / compiler are you using (e.g. python version or version of gcc)</h3>\n<p>Python 3.5</p>\n<h3>What did you do?</h3>\n<p>I used the firestore client inside a Flask server which used <code>gevent==1.4.0</code>, and I had a weird failure, where every second call to an endpoint (that queried firestore), the query would be stuck waiting forever.</p>\n<h3>What did you expect to see?</h3>\n<p>firestore queries not waiting forever</p>\n<h3>What did you see instead?</h3>\n<p>When stuck, grpc would show (I acquired these with GRPC_TRACE), every 200 ms:</p>\n<pre><code>I1104 22:07:01.491258263    9276 completion_queue.cc:960]    grpc_completion_queue_next(cq=0x3399620, deadline=gpr_timespec { tv_sec: 1572901621, tv_nsec: 691232769, clock_type: 1 }, reserved=(nil))\n</code></pre>\n<p>I'm not sure about the thread/process situation</p>\n<p>I changed the async mode to using <code>eventlet</code> instead of <code>gevent</code> and the problem went away, but I guess this failure mode might be interesting for people interested in grpc+gevent</p>\n      </td>\n    ",
+            "author": "nayeemrmn",
+            "time": "2019-11-11T17:10:16",
+            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p><a class=\"user-mention\" data-hovercard-type=\"user\" data-hovercard-url=\"/hovercards?user_id=80\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"https://github.com/ry\">@ry</a> Can this be closed?</p>\n      </td>\n    ",
             "item_type": "comment"
         },
         {
-            "author": "gnossen",
-            "time": "2019-11-05T20:47:42",
+            "author": "ry",
+            "time": "2019-11-12T18:47:34",
+            "comment": "<td class=\"d-block comment-body markdown-body  js-comment-body\">\n          <p>Yea. Also importmaps work in deno.</p>\n      </td>\n    ",
+            "item_type": "comment"
+        },
+        {
+            "author": "ry",
+            "time": "2019-11-12T18:47:34",
             "item_type": "close_this"
         }
     ]
 }
-
 {
     "full_name": null,
     "user_name": "Fenzland",
