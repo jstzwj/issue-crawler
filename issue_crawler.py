@@ -245,7 +245,12 @@ class Crawler(object):
                     timeline_item['labels'] = get_labels(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'add_label'
-
+                # remove label
+                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "removed") and contains(., "label")]')) > 0:
+                    timeline_item['author'] = get_author(each_timeline_item)
+                    timeline_item['labels'] = get_labels(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'remove_label'
                 # self-assigned
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "self-assigned this")]/parent::div')) > 0:
                     author = get_author(each_timeline_item)
@@ -346,15 +351,11 @@ class Crawler(object):
                         reason = reason[0]
                     timeline_item['reason'] = reason
                     timeline_item['item_type'] = 'lock_issue'
-                # milestone add
-                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added this to the") and contains(., "milestone")]')) > 0:
+                # lock no reason
+                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "locked and limited conversation to") and contains(., "collaborators")]')) > 0:
                     timeline_item['author'] = get_author(each_timeline_item)
-                    milestone = each_timeline_item.xpath('.//a[@class="link-gray-dark text-bold"]/@href')
-                    if len(milestone) > 0:
-                        milestone = milestone[0]
-                    timeline_item['milestone'] = milestone
                     timeline_item['time'] = get_datetime(each_timeline_item)
-                    timeline_item['item_type'] = 'add_milestone'
+                    timeline_item['item_type'] = 'lock_issue'
                 # kanban add
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "added this to")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
                     author = get_author(each_timeline_item)
@@ -371,7 +372,7 @@ class Crawler(object):
                     timeline_item['item_type'] = 'add_project'
                 # kanban move
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "moved this from")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
-                    author = get_author(each_timeline_item)
+                    # author = get_author(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
 
                     project_url = each_timeline_item.xpath('.//a[@data-skip-pjax]/@href')
@@ -386,6 +387,15 @@ class Crawler(object):
                         timeline_item['column_to'] = columns[1]
                     
                     timeline_item['item_type'] = 'move_project'
+                # milestone add
+                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added this to the") and contains(., "milestone")]')) > 0:
+                    timeline_item['author'] = get_author(each_timeline_item)
+                    milestone = each_timeline_item.xpath('.//a[@class="link-gray-dark text-bold"]/@href')
+                    if len(milestone) > 0:
+                        milestone = milestone[0]
+                    timeline_item['milestone'] = milestone
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'add_milestone'
                 # milestones modified
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "modified the milestone")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
                     author = get_author(each_timeline_item)
@@ -393,6 +403,15 @@ class Crawler(object):
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['milestones'] = each_timeline_item.xpath('.//a[@class="link-gray-dark text-bold"]/@href')
                     timeline_item['item_type'] = 'modify_milestones'
+                # milestones remove
+                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "removed this from the") and contains(., "milestone")]')) > 0:
+                    timeline_item['author'] = get_author(each_timeline_item)
+                    milestone = each_timeline_item.xpath('.//a[@class="link-gray-dark text-bold"]/@href')
+                    if len(milestone) > 0:
+                        milestone = milestone[0]
+                    timeline_item['milestone'] = milestone
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'remove_milestone'
                 # add a commit (forked repo)
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added a commit") and contains(., "that referenced") and contains(., "this issue")]')) > 0:
                     author = get_author(each_timeline_item)

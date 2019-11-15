@@ -21,7 +21,7 @@ if __name__ == "__main__":
             for each_timeline in issue['timeline']:
                 if each_timeline == {}:
                     continue
-                if each_timeline['item_type'] not in ['referenced_this',]:
+                if each_timeline['item_type'] not in ['referenced_this', 'referenced_to_pull']:
                     users.save_user(each_timeline['author'])
 
         # dump issue activities
