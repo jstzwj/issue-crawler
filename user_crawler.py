@@ -137,6 +137,8 @@ class UserCrawler(object):
             except Exception as e:
                 print(e)
                 time.sleep(1)
+            if len(self.users) % 100 == 0:
+                self.save_to_file()
         self.users.append(user)
         return user
 

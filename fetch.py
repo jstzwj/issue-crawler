@@ -17,6 +17,28 @@ def read_issues(repo_name):
 
     return issues
 
+def read_users(repo_name):
+    users = []
+    with open(f'user_{repo_name}.txt', mode='r', encoding='utf-8') as f:
+        lines = f.readlines()
+        # fetch all user info
+        for each_line in lines:
+            user = json.loads(each_line)
+            users.append(user)
+
+    return users
+
+def read_commits(repo_name):
+    commits = []
+    with open(f'commit_{repo_name}.txt', mode='r', encoding='utf-8') as f:
+        lines = f.readlines()
+        # fetch all user info
+        for each_line in lines:
+            commit = json.loads(each_line)
+            commits.append(commit)
+
+    return commits
+
 def fetch_repo(repo_name, repo_path, url, save_path):
     # fetch issue
     crawler = Crawler(os.path.join(save_path, f'{repo_name}_issue.txt'))
@@ -35,7 +57,6 @@ def fetch_repo(repo_name, repo_path, url, save_path):
                 continue
             if each_timeline['item_type'] not in ['referenced_this', 'referenced_to_pull']:
                 user_crawler.save_user(each_timeline['author'])
-
 
 if __name__ == "__main__":
     fetch_repo('deno', '/denoland/deno', 'https://github.com/denoland/deno.git', './')
