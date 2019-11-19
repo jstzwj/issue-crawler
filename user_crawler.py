@@ -121,7 +121,7 @@ class UserCrawler(object):
         if login is None:
             return
         for each_user in self.users:
-            if each_user['user_name'] == login:
+            if 'user_name' in each_user.keys() and each_user['user_name'] == login:
                 return each_user
         user_url = 'https://github.com/' + login
         print(f'get user: {user_url}')
