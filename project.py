@@ -26,6 +26,31 @@ def parse_repo_url(url):
 
     return url_groups.group(1), url_groups.group(2)
 
+def get_issue_labels(issue):
+    labels = set()
+
+    if len(issue['timeline']) <= 0:
+        return list(labels)
+
+    # issue timeline
+    for each_timeline in issue['timeline']:
+        if each_timeline == {}:
+            continue
+        if 'author' not in each_timeline.keys():
+            continue
+
+        if each_timeline['item_type'] == 'add_and_remove_label':
+            pass
+        elif each_timeline['item_type'] == 'add_label':
+            for each_label in each_timeline['labels']:
+                labels.add(each_label)
+        elif each_timeline['item_type'] == 'remove_label':
+            for each_label in each_timeline['labels']:
+                if each_label in labels:
+                    labels.remove(each_label)
+
+    return list(labels)
+
 class Project(object):
     def __init__(self):
         self.commits = []

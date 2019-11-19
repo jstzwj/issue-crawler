@@ -237,9 +237,9 @@ class Crawler(object):
                 if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added") and contains(., "and removed") and contains(., "labels")]')) > 0:
                     timeline_item['author'] = get_author(each_timeline_item)
                     labels_added = each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "removed")]/preceding-sibling::span[contains(@class, "IssueLabel")]/a/text()')
-                    timeline_item['labels_added'] = get_labels(each_timeline_item)
+                    timeline_item['labels_added'] = get_labels(labels_added)
                     labels_removed = each_timeline_item.xpath('.//div[@class="TimelineItem-body"]/text()[contains(., "removed")]/following-sibling::span[contains(@class, "IssueLabel")]/a/text()')
-                    timeline_item['labels_removed'] = get_labels(each_timeline_item)
+                    timeline_item['labels_removed'] = get_labels(labels_removed)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'add_and_remove_label'
 

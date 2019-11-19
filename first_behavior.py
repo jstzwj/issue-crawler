@@ -11,6 +11,14 @@ def item_similarity():
 def user_similarity():
     pass
 
+def labels_to_string(labels):
+    ret = ''
+    for i, each_label in enumerate(labels):
+        if i != 0:
+            ret += ','
+        ret += each_label
+
+    return ret
 
 def first_type_count(repo, path):
 
@@ -30,13 +38,15 @@ def first_type_count(repo, path):
     for each_issue in issues:
         if len(each_issue) <= 0:
             continue
-
+        
+        labels = project.get_issue_labels(each_issue)
         # create issue
         first_issue = each_issue['timeline'][0]
         item = {}
         item['user'] = first_issue['author']
         item['time'] = first_issue['time']
         item['type'] = 'create_issue'
+        item['labels'] = labels
 
         activities_list.append(item)
 
@@ -50,6 +60,7 @@ def first_type_count(repo, path):
             item['user'] = each_timeline['author']
             item['time'] = each_timeline['time']
             item['type'] = each_timeline['item_type']
+            item['labels'] = labels
 
             activities_list.append(item)
 
@@ -66,9 +77,9 @@ def first_type_count(repo, path):
         writer = csv.writer(csvfile)
 
         #先写入columns_name
-        writer.writerow(["user_name", "type", "time"])
+        writer.writerow(["user_name", "type", "time", 'labels'])
         for name, activity_type in users.items():
-            writer.writerow([name, activity_type['type'], activity_type['time']])
+            writer.writerow([name, activity_type['type'], activity_type['time'], labels_to_string(activity_type['labels'])])
 
 
 # first_type_count('/glfw/glfw', './data/glfw')
