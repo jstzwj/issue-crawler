@@ -24,8 +24,7 @@ def fetch_repo(repo_name, repo_path, url, save_path):
 
     # get commits
     if not os.path.exists(commit_file):
-        path = os.path.join('repos', repo_name)
-        get_commits(url, path, commit_file)
+        get_commits(url, commit_file)
 
     # get user
     user_crawler = UserCrawler(user_file)

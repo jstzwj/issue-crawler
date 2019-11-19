@@ -2,7 +2,9 @@
 
 class Project(object):
     def __init__(self):
-        pass
+        self.commits = []
+        self.issues = []
+        self.users = []
 
     def load(self, path, repo_name):
         pass

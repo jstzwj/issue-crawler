@@ -64,5 +64,5 @@ def first_type_count(repo_name, path):
             writer.writerow([name, activity_type['type'], activity_type['time']])
 
 
-first_type_count('gumtree', './data/gumtree')
+first_type_count('glfw', './data/glfw')
 

@@ -37,6 +37,17 @@ def get_authors(node):
     author = node.xpath('.//a[@data-hovercard-type="user"]/text()')
     return author
 
+def get_org(node):
+    orgs = node.xpath('.//a[@data-hovercard-type="organization"]/text()')
+    if len(orgs) > 0:
+        return orgs[0]
+    else:
+        return None
+
+def get_orgs(node):
+    orgs = node.xpath('.//a[@data-hovercard-type="organization"]/text()')
+    return orgs
+
 def get_users(node):
     users = node.xpath('.//a[@data-hovercard-type="user"]/span/text()')
     return users
@@ -233,20 +244,20 @@ class Crawler(object):
                     timeline_item['item_type'] = 'add_and_remove_label'
 
                 # add labels
-                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added") and contains(., "labels")]')) > 0:
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added") and contains(., "labels")]')) > 0:
                     timeline_item['author'] = get_author(each_timeline_item)
                     timeline_item['labels'] = get_labels(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'add_label'
 
                 # add a label
-                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added") and contains(., "label")]')) > 0:
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added") and contains(., "label")]')) > 0:
                     timeline_item['author'] = get_author(each_timeline_item)
                     timeline_item['labels'] = get_labels(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'add_label'
                 # remove label
-                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "removed") and contains(., "label")]')) > 0:
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "removed") and contains(., "label")]')) > 0:
                     timeline_item['author'] = get_author(each_timeline_item)
                     timeline_item['labels'] = get_labels(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
@@ -345,6 +356,7 @@ class Crawler(object):
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "locked as")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
                     author = get_author(each_timeline_item)
                     timeline_item['author'] = author
+                    timeline_item['org'] = get_org(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     reason = each_timeline_item.xpath('.//strong/text()')
                     if len(reason) > 0:
@@ -352,10 +364,17 @@ class Crawler(object):
                     timeline_item['reason'] = reason
                     timeline_item['item_type'] = 'lock_issue'
                 # lock no reason
-                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "locked and limited conversation to") and contains(., "collaborators")]')) > 0:
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "locked and limited conversation to") and contains(., "collaborators")]')) > 0:
                     timeline_item['author'] = get_author(each_timeline_item)
+                    timeline_item['org'] = get_org(each_timeline_item)
                     timeline_item['time'] = get_datetime(each_timeline_item)
                     timeline_item['item_type'] = 'lock_issue'
+                # unlock
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "unlocked this conversation")]')) > 0:
+                    timeline_item['author'] = get_author(each_timeline_item)
+                    timeline_item['org'] = get_org(each_timeline_item)
+                    timeline_item['time'] = get_datetime(each_timeline_item)
+                    timeline_item['item_type'] = 'unlock_issue'
                 # kanban add
                 elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body"]//text()[contains(., "added this to")]/ancestor::div[@class="TimelineItem-body"]')) > 0:
                     author = get_author(each_timeline_item)
@@ -388,7 +407,7 @@ class Crawler(object):
                     
                     timeline_item['item_type'] = 'move_project'
                 # milestone add
-                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added this to the") and contains(., "milestone")]')) > 0:
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "added this to the") and contains(., "milestone")]')) > 0:
                     timeline_item['author'] = get_author(each_timeline_item)
                     milestone = each_timeline_item.xpath('.//a[@class="link-gray-dark text-bold"]/@href')
                     if len(milestone) > 0:
@@ -404,7 +423,7 @@ class Crawler(object):
                     timeline_item['milestones'] = each_timeline_item.xpath('.//a[@class="link-gray-dark text-bold"]/@href')
                     timeline_item['item_type'] = 'modify_milestones'
                 # milestones remove
-                if len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "removed this from the") and contains(., "milestone")]')) > 0:
+                elif len(each_timeline_item.xpath('.//div[@class="TimelineItem-body" and contains(., "removed this from the") and contains(., "milestone")]')) > 0:
                     timeline_item['author'] = get_author(each_timeline_item)
                     milestone = each_timeline_item.xpath('.//a[@class="link-gray-dark text-bold"]/@href')
                     if len(milestone) > 0:
