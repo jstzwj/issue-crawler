@@ -71,5 +71,6 @@ def first_type_count(repo, path):
             writer.writerow([name, activity_type['type'], activity_type['time']])
 
 
-first_type_count('/glfw/glfw', './data/glfw')
+# first_type_count('/glfw/glfw', './data/glfw')
+first_type_count('/ray-project/ray', './data/ray')
 
