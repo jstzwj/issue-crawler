@@ -7,24 +7,25 @@ from commit_crawler import get_commits
 from user_crawler import UserCrawler
 
 import ioutil
+import project
 
 
-
-def fetch_repo(repo_name, repo_path, url, save_path):
+def fetch_repo(url, save_path):
+    repo_owner, repo_name = project.parse_repo_url(url)
     if not os.path.exists(save_path):
         os.mkdir(save_path)
 
-    issue_file = os.path.join(save_path, f'{repo_name}_issue.txt')
-    commit_file = os.path.join(save_path, f'{repo_name}_commit.txt')
-    user_file = os.path.join(save_path, f'{repo_name}_user.txt')
+    issue_file = os.path.join(save_path, f'{repo_owner}_{repo_name}_issue.txt')
+    commit_file = os.path.join(save_path, f'{repo_owner}_{repo_name}_commit.txt')
+    user_file = os.path.join(save_path, f'{repo_owner}_{repo_name}_user.txt')
     # fetch issue
     if not os.path.exists(issue_file):
         crawler = Crawler(issue_file)
-        crawler.get_repo_issue(repo_path)
+        crawler.get_repo_issue(f'/{repo_owner}/{repo_name}')
 
     # get commits
     if not os.path.exists(commit_file):
-        get_commits(url, commit_file)
+        get_commits(url, './repos', commit_file)
 
     # get user
     user_crawler = UserCrawler(user_file)
@@ -40,6 +41,6 @@ if __name__ == "__main__":
     # fetch_repo('deno', '/denoland/deno', 'https://github.com/denoland/deno.git', './')
     # fetch_repo('godot', '/godotengine/godot', 'https://github.com/godotengine/godot.git', './data/godot')
     # fetch_repo('gumtree', '/GumTreeDiff/gumtree', 'https://github.com/GumTreeDiff/gumtree.git', './data/gumtree')
-    fetch_repo('glfw', '/glfw/glfw', 'https://github.com/glfw/glfw.git', './data/glfw')
+    fetch_repo('https://github.com/glfw/glfw.git', './data/glfw')
     
     

@@ -2,6 +2,7 @@ import json
 import csv
 import os
 import ioutil
+import project
 
 def item_similarity():
     pass
@@ -11,10 +12,17 @@ def user_similarity():
     pass
 
 
-def first_type_count(repo_name, path):
+def first_type_count(repo, path):
+
+    repo_owner, repo_name = project.parse_repo_name(repo)
 
     users = {}
-    issues = ioutil.read_issues(os.path.join(path, f'{repo_name}_issue.txt'))
+
+    prj = project.Project()
+    prj.load(path, repo)
+
+    
+    issues = prj.get_issues()
 
     activities_list = []
 
@@ -47,7 +55,6 @@ def first_type_count(repo_name, path):
 
     # sort by time
     activities_list.sort(key=lambda x:x['time'])
-    
 
     # find first
     for each_activity in activities_list:
@@ -64,5 +71,5 @@ def first_type_count(repo_name, path):
             writer.writerow([name, activity_type['type'], activity_type['time']])
 
 
-first_type_count('glfw', './data/glfw')
+first_type_count('/glfw/glfw', './data/glfw')
 
