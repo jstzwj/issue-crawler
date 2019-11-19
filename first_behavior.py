@@ -82,5 +82,6 @@ def first_type_count(repo, path):
 
 
 # first_type_count('/glfw/glfw', './data/glfw')
-first_type_count('/ray-project/ray', './data/ray')
+# first_type_count('/ray-project/ray', './data/ray')
+first_type_count('/GumTreeDiff/gumtree', './data/gumtree')
 
