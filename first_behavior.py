@@ -21,7 +21,6 @@ def labels_to_string(labels):
     return ret
 
 def first_type_count(repo, path):
-
     repo_owner, repo_name = project.parse_repo_name(repo)
 
     users = {}
