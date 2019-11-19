@@ -1,16 +1,7 @@
 import json
 import csv
-
-def read_issues(repo_name):
-    issues = []
-    with open(f'issue_{repo_name}.txt', mode='r', encoding='utf-8') as f:
-        lines = f.readlines()
-        # fetch all user info
-        for each_line in lines:
-            issue = json.loads(each_line)
-            issues.append(issue)
-
-    return issues
+import os
+import ioutil
 
 def item_similarity():
     pass
@@ -20,10 +11,10 @@ def user_similarity():
     pass
 
 
-def first_type_count(repo_name):
+def first_type_count(repo_name, path):
 
     users = {}
-    issues = read_issues('deno')
+    issues = ioutil.read_issues(os.path.join(path, f'{repo_name}_issue.txt'))
 
     activities_list = []
 
@@ -31,6 +22,8 @@ def first_type_count(repo_name):
     for each_issue in issues:
         if len(each_issue) <= 0:
             continue
+
+        # create issue
         first_issue = each_issue['timeline'][0]
         item = {}
         item['user'] = first_issue['author']
@@ -38,6 +31,8 @@ def first_type_count(repo_name):
         item['type'] = 'create_issue'
 
         activities_list.append(item)
+
+        # issue timeline
         for each_timeline in each_issue['timeline'][1:]:
             if each_timeline == {}:
                 continue
@@ -56,18 +51,18 @@ def first_type_count(repo_name):
 
     # find first
     for each_activity in activities_list:
-        if each_activity['user'] not in users:
-            users[each_activity['user']] = each_activity['type']
+        if each_activity['user'] not in users.keys():
+            users[each_activity['user']] = each_activity
 
     # write to csv
     with open(f"activities_{repo_name}.csv","w", newline='') as csvfile:
         writer = csv.writer(csvfile)
 
         #先写入columns_name
-        writer.writerow(["user_name", "type"])
+        writer.writerow(["user_name", "type", "time"])
         for name, activity_type in users.items():
-            writer.writerow([name, activity_type])
+            writer.writerow([name, activity_type['type'], activity_type['time']])
 
 
-first_type_count('deno')
+first_type_count('gumtree', './data/gumtree')
 
