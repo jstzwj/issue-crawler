@@ -51,6 +51,11 @@ def get_issue_labels(issue):
 
     return list(labels)
 
+
+class ItemBimap(object):
+    def __init__(self):
+        pass
+
 class Project(object):
     def __init__(self):
         self.commits = []
