@@ -87,6 +87,8 @@ if __name__ == "__main__":
 
     user_item_matrix, users_meta, issues_meta = get_user_item_matrix(project, datetime.datetime.strptime('2019-01-10T05:44:42Z', '%Y-%m-%dT%H:%M:%SZ'))
 
+    user_item_matrix_origin, users_meta_origin, issues_meta_origin = get_user_item_matrix(project, None)
+
     user_simil_matrix = numpy.zeros((len(users), len(users)))
 
 
@@ -103,13 +105,25 @@ if __name__ == "__main__":
     prediction_matrix = numpy.zeros((len(users), len(issues)))
 
     # top k
-    k = 9
     for a in range(len(users)):
         avg_ru = numpy.mean(user_item_matrix[a, :])
-        k = 1 / numpy.sum(user_simil_matrix[a, :])
+        k = 1 / (numpy.sum(user_simil_matrix[a, :]) + 0.00001)
         for i in range(len(issues)):
             prediction_matrix[a, i] = avg_ru + \
                 numpy.sum(user_simil_matrix[a, :] @ (user_item_matrix[:,i] - numpy.mean(user_item_matrix, axis=1))) * k
 
+    # changes from origin
+    change_matrix = (user_item_matrix_origin - user_item_matrix) > 0
+    print(change_matrix)
 
-    print(prediction_matrix[:])
+
+    # score
+    sorted_matrix = numpy.argsort(prediction_matrix, axis=1)
+    correct_counter = 0
+    for each_user_index in range(len(users)):
+        for top_k in range(8):
+            if change_matrix[each_user_index, sorted_matrix[each_user_index,top_k]]:
+                correct_counter += 1
+                break
+
+    print(correct_counter/len(users))
