@@ -82,6 +82,27 @@ def get_user_similarity(project, rate_matrix, left_index, user_left, right_index
 def get_issue_similarity(project, rate_matrix,user_left, user_right):
     pass
 
+'''
+get close or open state of an issue until sometime 
+'''
+def get_issue_state(issue, end_time):
+    state = 'open'
+    for each_timeline in issue['timeline']:
+        if each_timeline == {}:
+            continue
+        if 'time' not in each_timeline.keys():
+            continue
+        
+        if end_time is not None and datetime.datetime.strptime(each_timeline['time'], '%Y-%m-%dT%H:%M:%S') > end_time:
+            continue
+
+        if each_timeline['item_type'] == 'close_this':
+            state = 'close'
+        elif each_timeline['item_type'] == 'reopen_this':
+            state = 'open'
+
+    return state
+
 if __name__ == "__main__":
     project = Project()
     # project.load('./data/gumtree', '/GumTreeDiff/gumtree')
@@ -93,7 +114,9 @@ if __name__ == "__main__":
     print(f'users number: {len(users)}')
     print(f'issues number: {len(issues)}')
 
-    user_item_matrix, users_meta, issues_meta = get_user_item_matrix(project, datetime.datetime.strptime('2019-01-10T05:44:42Z', '%Y-%m-%dT%H:%M:%SZ'))
+    end_time = datetime.datetime.strptime('2019-01-10T05:44:42Z', '%Y-%m-%dT%H:%M:%SZ')
+
+    user_item_matrix, users_meta, issues_meta = get_user_item_matrix(project, end_time)
 
     user_item_matrix_origin, users_meta_origin, issues_meta_origin = get_user_item_matrix(project, None)
 
@@ -132,14 +155,50 @@ if __name__ == "__main__":
     # print(change_matrix)
 
 
-    # score
+    # filter and score
+    '''
+    What we need to do here is valid items and users filtering. If an issue had not been shown before, it should not be used for simulated recommend.
+    '''
     sorted_matrix = numpy.argsort(prediction_matrix, axis=1)
+    valid_user = []
+    valid_issue = []
+
+    with tqdm.tqdm(total=len(issues)) as pbar:
+        for each_issue_index in range(len(issues)):
+            is_valid = False
+
+            state = get_issue_state(issues[each_issue_index], end_time)
+            if state == 'open':
+                is_valid = True
+            else:
+                is_valid = False
+            
+            for each_user_index in range(len(users)):
+                if user_item_matrix_origin[each_user_index, each_issue_index] > 0 and \
+                    user_item_matrix[each_user_index, each_issue_index] <= 0:
+                    valid_user.append(each_user_index)
+                    break
+            
+            if not is_valid:
+                continue
+            else:
+                valid_issue.append(each_user_index)
+
+    # part of matrix and score
+    top_k = 40
     correct_counter = 0
-    valid_user_counter = 0
-    
+    for each_user_index in valid_user:
+        arg_issue_list = numpy.argsort(prediction_matrix[each_user_index, valid_issue])
+        for each_predict_item in arg_issue_list[:top_k]:
+            if user_item_matrix_origin[each_user_index, valid_issue[each_predict_item]] > 0:
+                correct_counter += 1
+                break
+
+    print(correct_counter/len(valid_user))
+    print(f'{correct_counter}/{len(valid_user)}')
+'''
     with tqdm.tqdm(total=len(users)) as pbar:
         for each_user_index in range(len(users)):
-            
             is_valid = False
             for each_issue_index in range(len(issues)):
                 if user_item_matrix_origin[each_user_index, each_issue_index] > 0 and \
@@ -150,25 +209,8 @@ if __name__ == "__main__":
             if not is_valid:
                 continue
             else:
-                valid_user_counter += 1
+                valid_user.append(each_user_index)
+'''
+    
 
-            top_k = 10
-
-            for each_issue_index in range(len(issues)):
-                sorted_issue_index = sorted_matrix[each_user_index, each_issue_index]
-                if top_k < 0:
-                    break
-
-                if user_item_matrix[each_user_index, sorted_issue_index] > 0:
-                    continue
-                else:
-                    if user_item_matrix_origin[each_user_index, sorted_issue_index] > 0:
-                        correct_counter += 1
-                        break
-
-                top_k -= 1
-
-            pbar.update(1)
-
-    print(correct_counter/valid_user_counter)
-    print(f'{correct_counter}/{valid_user_counter}')
+    
