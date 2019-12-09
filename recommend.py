@@ -87,7 +87,15 @@ get close or open state of an issue until sometime
 '''
 def get_issue_state(issue, end_time):
     state = 'open'
+    sorted_timeline = []
     for each_timeline in issue['timeline']:
+        if each_timeline == {}:
+            continue
+        if 'time' not in each_timeline.keys():
+            continue
+        sorted_timeline.append(each_timeline)
+    sorted(sorted_timeline, key= lambda x: x['time'])
+    for each_timeline in sorted_timeline:
         if each_timeline == {}:
             continue
         if 'time' not in each_timeline.keys():
@@ -162,40 +170,46 @@ if __name__ == "__main__":
     sorted_matrix = numpy.argsort(prediction_matrix, axis=1)
     valid_user = []
     valid_issue = []
+    print(f'valid users number: {len(valid_user)}')
+    print(f'valid issues number: {len(valid_issue)}')
 
-    with tqdm.tqdm(total=len(issues)) as pbar:
-        for each_issue_index in range(len(issues)):
+    for each_issue_index in range(len(issues)):
+        is_valid = False
+
+        state = get_issue_state(issues[each_issue_index], end_time)
+        if state == 'open':
+            is_valid = True
+        else:
             is_valid = False
+        
+        if not is_valid:
+            continue
+        else:
+            valid_issue.append(each_issue_index)
 
-            state = get_issue_state(issues[each_issue_index], end_time)
-            if state == 'open':
-                is_valid = True
-            else:
-                is_valid = False
-            
-            for each_user_index in range(len(users)):
-                if user_item_matrix_origin[each_user_index, each_issue_index] > 0 and \
-                    user_item_matrix[each_user_index, each_issue_index] <= 0:
-                    valid_user.append(each_user_index)
-                    break
-            
-            if not is_valid:
-                continue
-            else:
-                valid_issue.append(each_user_index)
-
-    # part of matrix and score
-    top_k = 40
-    correct_counter = 0
-    for each_user_index in valid_user:
-        arg_issue_list = numpy.argsort(prediction_matrix[each_user_index, valid_issue])
-        for each_predict_item in arg_issue_list[:top_k]:
-            if user_item_matrix_origin[each_user_index, valid_issue[each_predict_item]] > 0:
-                correct_counter += 1
+    for each_user_index in range(len(users)):
+        for each_issue_index in valid_issue:
+            if user_item_matrix_origin[each_user_index, each_issue_index] > 0 and \
+                user_item_matrix[each_user_index, each_issue_index] <= 0:
+                valid_user.append(each_user_index)
                 break
 
-    print(correct_counter/len(valid_user))
-    print(f'{correct_counter}/{len(valid_user)}')
+    # part of matrix and score
+    def predict(top_k):
+        correct_counter = 0
+        for each_user_index in valid_user:
+            arg_issue_list = numpy.argsort(prediction_matrix[each_user_index, valid_issue])
+            for each_predict_item in arg_issue_list[:top_k]:
+                if user_item_matrix_origin[each_user_index, valid_issue[each_predict_item]] > 0:
+                    correct_counter += 1
+                    break
+            
+        print(correct_counter/len(valid_user))
+        print(f'{correct_counter}/{len(valid_user)}')
+        return correct_counter
+
+    # for each_top_k in range(0, 40):
+    predict(199)
 '''
     with tqdm.tqdm(total=len(users)) as pbar:
         for each_user_index in range(len(users)):
