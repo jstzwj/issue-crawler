@@ -43,4 +43,6 @@ if __name__ == "__main__":
     # fetch_repo('godot', '/godotengine/godot', 'https://github.com/godotengine/godot.git', './data/godot')
     # fetch_repo('https://github.com/GumTreeDiff/gumtree.git', './data/gumtree')
     # fetch_repo('https://github.com/glfw/glfw.git', './data/glfw')
-    fetch_repo('https://github.com/ray-project/ray.git', './data/ray')
+    # fetch_repo('https://github.com/ray-project/ray.git', './data/ray')
+    fetch_repo('https://github.com/yegord/snowman.git', './data/snowman')
+    

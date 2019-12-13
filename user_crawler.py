@@ -84,7 +84,54 @@ def parse_profile(tree):
 
     return ret
 
+def parse_repository(login):
+    ret = {}
+    url = f'https://github.com/{login}?tab=repositories'
+    
+    while True:
+        html_text = requests.get(url, proxies=proxies).text
+        if html_text == 'Not Found':
+            return {}
+        tree = etree.HTML(html_text)
 
+        for each in tree.xpath('//a[@itemprop="name codeRepository"]/text()'):
+            ret['repo'].append(each.strip())
+
+        pagination = tree.xpath('//div[@class="paginate-container"]')[0]
+        previous = pagination.xpath('.//a[text()="Previous"]/@href')
+        next = pagination.xpath('.//a[text()="Next"]/@href')
+
+        if len(next) != 0:
+            url = next[0]
+        else:
+            break
+
+    return ret
+
+
+def parse_star(login):
+    ret = {}
+    url = f'https://github.com/{login}?tab=stars'
+    
+    while True:
+        html_text = requests.get(url, proxies=proxies).text
+        if html_text == 'Not Found':
+            return {}
+        tree = etree.HTML(html_text)
+
+        for each in tree.xpath('//div[@class="d-inline-block mb-1"]/h3/a/@href'):
+            ret['star'].append(each)
+
+        pagination = tree.xpath('//div[@class="paginate-container"]')[0]
+        previous = pagination.xpath('.//a[text()="Previous"]/@href')
+        next = pagination.xpath('.//a[text()="Next"]/@href')
+
+        if len(next) != 0:
+            url = next[0]
+        else:
+            break
+
+    return ret
 
 class UserCrawler(object):
     def __init__(self, path = 'user.txt'):
@@ -128,11 +175,24 @@ class UserCrawler(object):
         user = None
         while True:
             try:
+                # profile
                 html_text = requests.get('https://github.com/' + login, proxies=proxies).text
                 if html_text == 'Not Found':
                     return {}
                 html_root = etree.HTML(html_text)
                 user = parse_profile(html_root)
+
+                # repository
+                repos = parse_repository(user['user_name'])
+                user.update(repos)
+
+                # star
+                stars = parse_star(user['user_name'])
+                user.update(stars)
+
+                # follower
+
+                # following
                 break
             except Exception as e:
                 print(e)

@@ -2,6 +2,7 @@
 import datetime
 import numpy
 import tqdm
+from matplotlib import pyplot as plt 
 from project import Project
 
 def get_user_item_matrix(project, end_time):
@@ -111,25 +112,20 @@ def get_issue_state(issue, end_time):
 
     return state
 
-if __name__ == "__main__":
-    project = Project()
-    # project.load('./data/gumtree', '/GumTreeDiff/gumtree')
-    project.load('./data/deno', '/denoland/deno')
 
+def rec_issues(project, end_time):
+    
     users = project.get_users()
     issues = project.get_issues()
 
     print(f'users number: {len(users)}')
     print(f'issues number: {len(issues)}')
 
-    end_time = datetime.datetime.strptime('2019-01-10T05:44:42Z', '%Y-%m-%dT%H:%M:%SZ')
-
     user_item_matrix, users_meta, issues_meta = get_user_item_matrix(project, end_time)
 
     user_item_matrix_origin, users_meta_origin, issues_meta_origin = get_user_item_matrix(project, None)
 
     user_simil_matrix = numpy.zeros((len(users), len(users)))
-
 
     with tqdm.tqdm(total=len(users)*len(users)//2) as pbar:
         for i, each_user_i in enumerate(users):
@@ -170,15 +166,14 @@ if __name__ == "__main__":
     sorted_matrix = numpy.argsort(prediction_matrix, axis=1)
     valid_user = []
     valid_issue = []
-    print(f'valid users number: {len(valid_user)}')
-    print(f'valid issues number: {len(valid_issue)}')
 
     for each_issue_index in range(len(issues)):
         is_valid = False
 
         state = get_issue_state(issues[each_issue_index], end_time)
         if state == 'open':
-            is_valid = True
+            if get_issue_state(issues[each_issue_index], None) == 'close':
+                is_valid = True
         else:
             is_valid = False
         
@@ -194,13 +189,24 @@ if __name__ == "__main__":
                 valid_user.append(each_user_index)
                 break
 
+    print(f'valid users number: {len(valid_user)}')
+    print(f'valid issues number: {len(valid_issue)}')
+
     # part of matrix and score
     def predict(top_k):
         correct_counter = 0
+        record = []
         for each_user_index in valid_user:
-            arg_issue_list = numpy.argsort(prediction_matrix[each_user_index, valid_issue])
-            for each_predict_item in arg_issue_list[:top_k]:
-                if user_item_matrix_origin[each_user_index, valid_issue[each_predict_item]] > 0:
+            for each_issue_index in valid_issue:
+                record.append(
+                    (each_issue_index,
+                    prediction_matrix[each_user_index, each_issue_index]
+                    )
+                )
+
+            sorted(record, key= lambda x: x[1], reverse= True)
+            for each_item_index in record[:top_k]:
+                if user_item_matrix_origin[each_user_index, each_item_index[0]] > 0:
                     correct_counter += 1
                     break
             
@@ -209,22 +215,43 @@ if __name__ == "__main__":
         return correct_counter
 
     # for each_top_k in range(0, 40):
-    predict(199)
-'''
-    with tqdm.tqdm(total=len(users)) as pbar:
-        for each_user_index in range(len(users)):
-            is_valid = False
-            for each_issue_index in range(len(issues)):
-                if user_item_matrix_origin[each_user_index, each_issue_index] > 0 and \
-                    user_item_matrix[each_user_index, each_issue_index] <= 0:
-                    is_valid = True
-                    break
-            
-            if not is_valid:
-                continue
-            else:
-                valid_user.append(each_user_index)
-'''
+    return predict(3)/len(valid_user), predict(5)/len(valid_user), predict(10)/len(valid_user)
+
+if __name__ == "__main__":
+    project = Project()
+    # project.load('./data/gumtree', '/GumTreeDiff/gumtree')
+    project.load('./data/deno', '/denoland/deno')
+    
+    time_list = [
+        '2019-1-10T05:44:42Z',
+        '2019-2-10T05:44:42Z',
+        '2019-3-10T05:44:42Z',
+        '2019-4-10T05:44:42Z',
+        '2019-5-10T05:44:42Z',
+        '2019-6-10T05:44:42Z',
+        '2019-7-10T05:44:42Z',
+        '2019-8-10T05:44:42Z',
+        '2019-9-10T05:44:42Z',
+        '2019-10-10T05:44:42Z',
+        '2019-11-10T05:44:42Z',
+    ]
+    x_list = list(range(11))
+    top_3_list = []
+    top_5_list = []
+    top_10_list = []
+    for each_time in time_list:
+        ret = rec_issues(project, datetime.datetime.strptime(each_time, '%Y-%m-%dT%H:%M:%SZ'))
+        top_3_list.append(ret[0])
+        top_5_list.append(ret[1])
+        top_10_list.append(ret[2])
+
+    plt.title("Matplotlib demo") 
+    plt.xlabel("x axis caption")
+    plt.ylabel("y axis caption")
+    plt.plot(x_list,top_3_list,"b")
+    plt.plot(x_list,top_5_list,"r") 
+    plt.plot(x_list,top_10_list,"y")
+    plt.show()
     
 
     
