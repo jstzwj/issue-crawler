@@ -99,7 +99,11 @@ def parse_repository(login):
         for each in tree.xpath('//a[@itemprop="name codeRepository"]/text()'):
             ret['repo'].append(each.strip())
 
-        pagination = tree.xpath('//div[@class="paginate-container"]')[0]
+        pagination = tree.xpath('//div[@class="paginate-container"]')
+        if len(pagination) == 0:
+            break
+        else:
+            pagination = pagination[0]
         previous = pagination.xpath('.//a[text()="Previous"]/@href')
         next = pagination.xpath('.//a[text()="Next"]/@href')
 
@@ -126,7 +130,11 @@ def parse_star(login):
         for each in tree.xpath('//div[@class="d-inline-block mb-1"]/h3/a/@href'):
             ret['star'].append(each)
 
-        pagination = tree.xpath('//div[@class="paginate-container"]')[0]
+        pagination = tree.xpath('//div[@class="paginate-container"]')
+        if len(pagination) == 0:
+            break
+        else:
+            pagination = pagination[0]
         previous = pagination.xpath('.//a[text()="Previous"]/@href')
         next = pagination.xpath('.//a[text()="Next"]/@href')
 
