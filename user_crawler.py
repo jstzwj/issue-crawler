@@ -85,7 +85,9 @@ def parse_profile(tree):
     return ret
 
 def parse_repository(login):
-    ret = {}
+    ret = {
+        'repo': []
+    }
     url = f'https://github.com/{login}?tab=repositories'
     
     while True:
@@ -110,7 +112,9 @@ def parse_repository(login):
 
 
 def parse_star(login):
-    ret = {}
+    ret = {
+        'star': []
+    }
     url = f'https://github.com/{login}?tab=stars'
     
     while True:
@@ -197,7 +201,7 @@ class UserCrawler(object):
             except Exception as e:
                 print(e)
                 time.sleep(1)
-            if len(self.users) % 100 == 0:
+            if len(self.users) % 10 == 0:
                 self.save_to_file()
         self.users.append(user)
         return user
