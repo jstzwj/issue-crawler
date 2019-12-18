@@ -43,7 +43,7 @@ def get_user_item_matrix(project, end_time):
             if each_timeline['author'] in counter.keys():
                 counter[each_timeline['author']] += 1
             else:
-                counter[each_timeline['author']] = 0
+                counter[each_timeline['author']] = 1
         for each_user, each_count in counter.items():
             if each_user is not None:
                 rate_matrix[users_meta[1][each_user], i] = each_count/len(each_issue['timeline'])
@@ -87,7 +87,7 @@ def get_issue_similarity(project, rate_matrix,user_left, user_right):
 get close or open state of an issue until sometime 
 '''
 def get_issue_state(issue, end_time):
-    state = 'open'
+    state = 'nofound'
     sorted_timeline = []
     for each_timeline in issue['timeline']:
         if each_timeline == {}:
@@ -105,6 +105,8 @@ def get_issue_state(issue, end_time):
         if end_time is not None and datetime.datetime.strptime(each_timeline['time'], '%Y-%m-%dT%H:%M:%S') > end_time:
             continue
 
+        if each_timeline['item_type'] == 'comment' and state == 'nofound':
+            state = 'open'
         if each_timeline['item_type'] == 'close_this':
             state = 'close'
         elif each_timeline['item_type'] == 'reopen_this':
@@ -195,8 +197,9 @@ def rec_issues(project, end_time):
     # part of matrix and score
     def predict(top_k):
         correct_counter = 0
-        record = []
+        
         for each_user_index in valid_user:
+            record = []
             for each_issue_index in valid_issue:
                 record.append(
                     (each_issue_index,
@@ -204,7 +207,7 @@ def rec_issues(project, end_time):
                     )
                 )
 
-            sorted(record, key= lambda x: x[1], reverse= True)
+            record.sort(key= lambda x: x[1], reverse= True)
             for each_item_index in record[:top_k]:
                 if user_item_matrix_origin[each_user_index, each_item_index[0]] > 0:
                     correct_counter += 1
