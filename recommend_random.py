@@ -2,6 +2,7 @@
 import datetime
 import numpy
 import tqdm
+import random
 from matplotlib import pyplot as plt 
 from project import Project
 
@@ -77,7 +78,31 @@ def PearsonCorrelationSimilarity(vec1, vec2):
     return result
 
 def get_user_similarity(project, rate_matrix, left_index, user_left, right_index, user_right):
-    return PearsonCorrelationSimilarity(rate_matrix[left_index,:], rate_matrix[right_index,:])
+    star_map = {}
+    for each_star in user_left['star']:
+        if each_star not in star_map:
+            star_map[each_star] = len(star_map)
+
+    for each_star in user_right['star']:
+        if each_star not in star_map:
+            star_map[each_star] = len(star_map)
+
+    left_vec = numpy.zeros((len(star_map) + 1))
+    right_vec = numpy.zeros((len(star_map) + 1))
+    
+    for each_star in user_left['star']:
+        left_vec[star_map[each_star]] = 1
+
+    # 保证PearsonCorrelationSimilarity中dominator不为0
+    left_vec[len(star_map)] = 1
+
+    for each_star in user_right['star']:
+        right_vec[star_map[each_star]] = 1
+
+    # 保证PearsonCorrelationSimilarity中dominator不为0
+    right_vec[len(star_map)] = 1
+
+    return left_vec @ right_vec.T
 
 
 def get_issue_similarity(project, rate_matrix,user_left, user_right):
@@ -96,7 +121,7 @@ def get_issue_state(issue, end_time):
             continue
         sorted_timeline.append(each_timeline)
     sorted_timeline.sort(key= lambda x: x['time'])
-    for each_timeline in sorted_timeline:
+    for i, each_timeline in enumerate(sorted_timeline):
         if each_timeline == {}:
             continue
         if 'time' not in each_timeline.keys():
@@ -127,67 +152,30 @@ def rec_issues(project, end_time):
 
     user_item_matrix_origin, users_meta_origin, issues_meta_origin = get_user_item_matrix(project, None)
 
-    user_simil_matrix = numpy.zeros((len(users), len(users)))
-
-    with tqdm.tqdm(total=len(users)*len(users)//2) as pbar:
-        for i, each_user_i in enumerate(users):
-            for j, each_user_j in enumerate(users):
-                if j > i:
-                    continue
-                tmp = get_user_similarity(project, user_item_matrix, i, each_user_i, j, each_user_j)
-                user_simil_matrix[i, j] = tmp
-                user_simil_matrix[j, i] = tmp
-                pbar.update(1)
-
-    prediction_matrix = numpy.zeros((len(users), len(issues)))
-
-    # top k
-    with tqdm.tqdm(total=len(users)) as pbar:
-        user_item_mean = numpy.mean(user_item_matrix, axis=1)
-        user_item_mean_minus = user_item_matrix - numpy.repeat(user_item_mean[:, numpy.newaxis], user_item_matrix.shape[1], axis=1)
-
-        for a in range(len(users)):
-            avg_ru = numpy.mean(user_item_matrix[a, :])
-            k = 1 / (numpy.sum(user_simil_matrix[a, :]) + 0.00001)
-            
-            prediction_matrix[a, :] = avg_ru
-            for u in range(len(users)):
-                prediction_matrix[a, :] += k * (user_simil_matrix[a, u] * user_item_mean_minus[a, :])
-
-            pbar.update(1)
-
-    # changes from origin
-    change_matrix = (user_item_matrix_origin - user_item_matrix) > 0
-    # print(change_matrix)
-
-
     # filter and score
     '''
-    What we need to do here is valid items and users filtering. If an issue had not been shown before, it should not be used for simulated recommend.
+    What we need to do here is filtering valid items and users. If an issue had not been shown before, it shall not be used for simulated recommend.
     '''
-    sorted_matrix = numpy.argsort(prediction_matrix, axis=1)
     valid_user = []
     valid_issue = []
+    issue_state_before = []
+    issue_state_after = []
 
     for each_issue_index in range(len(issues)):
-        is_valid = False
-
-        state = get_issue_state(issues[each_issue_index], end_time)
-        if state == 'open':
-            if get_issue_state(issues[each_issue_index], None) == 'close':
-                is_valid = True
-        else:
-            is_valid = False
-        
-        if not is_valid:
-            continue
-        else:
+        issue_state_before.append(get_issue_state(issues[each_issue_index], end_time))
+        issue_state_after.append(get_issue_state(issues[each_issue_index], None))
+    
+    for each_issue_index in range(len(issues)):
+        if issue_state_before[each_issue_index] == 'open':
+            # and issue_state_after[each_issue_index] == 'close' ?
             valid_issue.append(each_issue_index)
 
     for each_user_index in range(len(users)):
         for each_issue_index in valid_issue:
             if user_item_matrix_origin[each_user_index, each_issue_index] > 0 and \
-                user_item_matrix[each_user_index, each_issue_index] <= 0:
+                issue_state_before[each_user_index] == 'open':
+                # user_item_matrix[each_user_index, each_issue_index] <= 0 and \
+                # len(issues) - numpy.sum(user_item_matrix[each_user_index, :] == 0) > 3:
                 valid_user.append(each_user_index)
                 break
 
@@ -203,14 +191,17 @@ def rec_issues(project, end_time):
             for each_issue_index in valid_issue:
                 record.append(
                     (each_issue_index,
-                    prediction_matrix[each_user_index, each_issue_index]
+                    random.random()
                     )
                 )
 
             record.sort(key= lambda x: x[1], reverse= True)
+            # print(record[:top_k])
             for each_item_index in record[:top_k]:
+                # print(record[:top_k])
                 if user_item_matrix_origin[each_user_index, each_item_index[0]] > 0:
                     correct_counter += 1
+                    # print(users[each_user_index])
                     break
             
         print(correct_counter/len(valid_user))

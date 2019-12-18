@@ -101,7 +101,7 @@ def get_user_similarity(project, rate_matrix, left_index, user_left, right_index
     # 保证PearsonCorrelationSimilarity中dominator不为0
     right_vec[len(star_map)] = 1
 
-    return left_vec @ right_vec.T
+    return numpy.dot(left_vec, right_vec)/(numpy.linalg.norm(left_vec)*numpy.linalg.norm(right_vec))
 
 
 def get_issue_similarity(project, rate_matrix,user_left, user_right):
@@ -119,7 +119,7 @@ def get_issue_state(issue, end_time):
         if 'time' not in each_timeline.keys():
             continue
         sorted_timeline.append(each_timeline)
-    sorted(sorted_timeline, key= lambda x: x['time'])
+    sorted_timeline.sort(key= lambda x: x['time'])
     for i, each_timeline in enumerate(sorted_timeline):
         if each_timeline == {}:
             continue
@@ -213,8 +213,8 @@ def rec_issues(project, end_time):
     for each_user_index in range(len(users)):
         for each_issue_index in valid_issue:
             if user_item_matrix_origin[each_user_index, each_issue_index] > 0 and \
-                user_item_matrix[each_user_index, each_issue_index] <= 0 and \
                 issue_state_before[each_user_index] == 'open':
+                # user_item_matrix[each_user_index, each_issue_index] <= 0 and \
                 # len(issues) - numpy.sum(user_item_matrix[each_user_index, :] == 0) > 3:
                 valid_user.append(each_user_index)
                 break
@@ -235,7 +235,8 @@ def rec_issues(project, end_time):
                     )
                 )
 
-            record.sort(key= lambda x: x[1], reverse= False)
+            record.sort(key= lambda x: x[1], reverse= True)
+            # print(record[:top_k])
             for each_item_index in record[:top_k]:
                 # print(record[:top_k])
                 if user_item_matrix_origin[each_user_index, each_item_index[0]] > 0:
