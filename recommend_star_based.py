@@ -220,7 +220,8 @@ def rec_issues(project, end_time):
 if __name__ == "__main__":
     project = Project()
     # project.load('./data/gumtree', '/GumTreeDiff/gumtree')
-    project.load('./data/deno', '/denoland/deno')
+    # project.load('./data/deno', '/denoland/deno')
+    project.load('./data/FreeRDP', '/FreeRDP/FreeRDP')
     
     time_list = [
         '2019-1-10T05:44:42Z',
