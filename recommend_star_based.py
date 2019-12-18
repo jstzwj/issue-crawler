@@ -77,7 +77,31 @@ def PearsonCorrelationSimilarity(vec1, vec2):
     return result
 
 def get_user_similarity(project, rate_matrix, left_index, user_left, right_index, user_right):
-    return PearsonCorrelationSimilarity(rate_matrix[left_index,:], rate_matrix[right_index,:])
+    star_map = {}
+    for each_star in user_left['star']:
+        if each_star not in star_map:
+            star_map[each_star] = len(star_map)
+
+    for each_star in user_right['star']:
+        if each_star not in star_map:
+            star_map[each_star] = len(star_map)
+
+    left_vec = numpy.zeros((len(star_map) + 1))
+    right_vec = numpy.zeros((len(star_map) + 1))
+    
+    for each_star in user_left['star']:
+        left_vec[star_map[each_star]] = 1
+
+    # 保证PearsonCorrelationSimilarity中dominator不为0
+    left_vec[len(star_map)] = 1
+
+    for each_star in user_right['star']:
+        right_vec[star_map[each_star]] = 1
+
+    # 保证PearsonCorrelationSimilarity中dominator不为0
+    right_vec[len(star_map)] = 1
+
+    return PearsonCorrelationSimilarity(left_vec, right_vec)
 
 
 def get_issue_similarity(project, rate_matrix,user_left, user_right):
