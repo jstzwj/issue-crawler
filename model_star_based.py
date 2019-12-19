@@ -25,35 +25,12 @@ class StarBasedRecommendModel(recommend.RecommendModel):
             self.id2users[i] = each_user['user_name']
             self.users2id[each_user['user_name']] = i
 
-    def get_user_item_matrix(self, end_time=None):
+    def get_user_item_matrix(self, train_data):
         rate_matrix = numpy.zeros((len(self.users), len(self.issues)))
 
         # reorder activities by time
-        for i, each_issue in enumerate(self.issues):
-            if len(each_issue) <= 0:
-                continue
-            
-            counter = {}
-            for each_timeline in each_issue['timeline']:
-                if each_timeline == {}:
-                    continue
-                if 'time' not in each_timeline.keys():
-                    continue
-                
-                if end_time is not None and datetime.datetime.strptime(each_timeline['time'], '%Y-%m-%dT%H:%M:%S') > end_time:
-                    continue
-
-                if 'author' not in each_timeline.keys():
-                    continue
-                
-                if each_timeline['author'] in counter.keys():
-                    counter[each_timeline['author']] += 1
-                else:
-                    counter[each_timeline['author']] = 1
-            for each_user, each_count in counter.items():
-                if each_user is not None:
-                    rate_matrix[self.users2id[each_user], i] = each_count/len(each_issue['timeline'])
-
+        for user_id, item_id, rate in train_data:
+            rate_matrix[user_id, item_id] = rate
         # print(rate_matrix)
         return rate_matrix
 
@@ -103,7 +80,7 @@ class StarBasedRecommendModel(recommend.RecommendModel):
     def train(self, train_data):
         self.train_data = train_data
         self.user_similarity_matrix = self.get_user_similarity_matrix()
-        self.user_item_matrix = self.get_user_item_matrix()
+        self.user_item_matrix = self.get_user_item_matrix(train_data)
         self.prediction_matrix = self.user_similarity_matrix @ self.user_item_matrix
     def recommend(self, user_id, k):
         candidate_issues = self.prediction_matrix[user_id, :].tolist()
@@ -114,4 +91,4 @@ class StarBasedRecommendModel(recommend.RecommendModel):
         sorted_orders = numpy.argsort(candidate_issues)
         # random.shuffle(candidate_issues)
 
-        return sorted_orders[-k:]
+        return sorted_orders[:k]

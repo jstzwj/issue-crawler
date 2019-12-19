@@ -225,35 +225,87 @@ class RandomRecommendModel(recommend.RecommendModel):
         random.shuffle(candidate_issues)
         return candidate_issues[:k]
 
-if __name__ == "__main__":
-    project = Project()
-    # project.load('./data/gumtree', '/GumTreeDiff/gumtree')
-    # project.load('./data/deno', '/denoland/deno')
-    project.load('./data/FreeRDP', '/FreeRDP/FreeRDP')
-    
-    dataset = extract_recommend_dataset(project)
-    train_data, test_data = dataset_split(dataset)
-    # model = RandomRecommendModel(project)
-    model = model_star_based.StarBasedRecommendModel(project)
-    model.train(train_data)
-
+def valid(model, test_data, k):
     # test data acceleration structure
-    users = {}
+    test_users = {}
+    test_issues = {}
     for each_data in test_data:
-        if each_data[0] in users.keys():
-            users[each_data[0]].append(each_data)
-        else:
-            users[each_data[0]] = []
+        # add to test users
+        if each_data[0] not in test_users.keys():
+            test_users[each_data[0]] = []
+        test_users[each_data[0]].append(each_data)
+
+        # add to test issues
+        if each_data[1] not in test_issues.keys():
+            test_issues[each_data[1]] = []
+        test_issues[each_data[1]].append(each_data)
 
     # valid
-    counter = 0
-    for each_user, data_list in users.items():
-        recommend_result = model.recommend(each_user, 10)
+    counter = {}
+    precision = 0.0
+    recall = 0.0
+    for each_user, data_list in test_users.items():
+        recommend_result = model.recommend(each_user, k)
+        counter[each_user] = 0
         for user_id, item_id, rate in data_list:
             if item_id in recommend_result:
-                counter+=1
-                break
+                counter[user_id] += 1
+        precision += counter[each_user] / k
+        recall += counter[each_user] / len(data_list)
+    precision = precision / len(test_users)
+    recall = recall / len(test_users)
 
-    print(f'precision: {counter}/{len(users)}, {counter/len(users)}')
+    correct_user_count = 0
+    for each_user, correct_count in counter.items():
+        if correct_count != 0:
+            correct_user_count += 1
 
+    print(f'accuracy: {correct_user_count}/{len(test_users)}, {correct_user_count/len(test_users)}')
+    print(f'precision: {precision}')
+    print(f'recall: {recall}')
+    return correct_user_count/len(test_users), recall, precision
+    
+if __name__ == "__main__":
+    project = Project()
+    project.load('./data/gumtree', '/GumTreeDiff/gumtree')
+    # project.load('./data/deno', '/denoland/deno')
+    # project.load('./data/FreeRDP', '/FreeRDP/FreeRDP')
+    dataset = extract_recommend_dataset(project)
+    
+    # model = RandomRecommendModel(project)
+    model = model_star_based.StarBasedRecommendModel(project)
+
+    x_list = [3, 5, 10, 20]
+    acc_plot = []
+    prec_plot = []
+    recall_plot = []
+
+    for each_k in x_list:
+        accuracy_mean = []
+        precision_mean = []
+        recall_mean = []
+        for ex_count in range(10):
+            # split data
+            train_data, test_data = dataset_split(dataset)
+            # train
+            model.train(train_data)
+            # valid
+            accuracy, recall, precision = valid(model, test_data, each_k)
+            accuracy_mean.append(accuracy)
+            precision_mean.append(precision)
+            recall_mean.append(recall)
+
+        acc_plot.append(numpy.mean(accuracy_mean))
+        recall_plot.append(numpy.mean(recall_mean))
+        prec_plot.append(numpy.mean(precision_mean))
+        print(f'mean: acc:{numpy.mean(accuracy_mean)} recall:{numpy.mean(recall_mean)} prec:{numpy.mean(precision_mean)}')
+    
+    plt.title("Issue recommend") 
+    plt.xlabel("x axis caption")
+    plt.ylabel("y axis caption")
+    plt.plot(x_list,acc_plot,"b")
+    plt.plot(x_list,recall_plot,"r") 
+    plt.plot(x_list,prec_plot,"y")
+    plt.show()
+    
 
