@@ -91,4 +91,4 @@ class StarBasedRecommendModel(recommend.RecommendModel):
         sorted_orders = numpy.argsort(candidate_issues)
         # random.shuffle(candidate_issues)
 
-        return sorted_orders[:k]
+        return sorted_orders[-k:]
