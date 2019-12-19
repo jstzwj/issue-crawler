@@ -6,6 +6,7 @@ import random
 from matplotlib import pyplot as plt 
 from project import Project
 import recommend
+import model_star_based
 
 def get_user_item_matrix(project, end_time):
     issues = project.get_issues()
@@ -214,9 +215,13 @@ class RandomRecommendModel(recommend.RecommendModel):
         self.issues = project.get_issues()
         self.users = project.get_users()
     def train(self, train_data):
-        pass
+        self.train_data = train_data
     def recommend(self, user_id, k):
         candidate_issues = list(range(len(self.issues)))
+        for each_data in self.train_data:
+            if each_data[0] == user_id:
+                candidate_issues.remove(each_data[1])
+
         random.shuffle(candidate_issues)
         return candidate_issues[:k]
 
@@ -228,7 +233,8 @@ if __name__ == "__main__":
     
     dataset = extract_recommend_dataset(project)
     train_data, test_data = dataset_split(dataset)
-    model = RandomRecommendModel(project)
+    # model = RandomRecommendModel(project)
+    model = model_star_based.StarBasedRecommendModel(project)
     model.train(train_data)
 
     # test data acceleration structure
@@ -242,7 +248,7 @@ if __name__ == "__main__":
     # valid
     counter = 0
     for each_user, data_list in users.items():
-        recommend_result = model.recommend(each_user, 3)
+        recommend_result = model.recommend(each_user, 10)
         for user_id, item_id, rate in data_list:
             if item_id in recommend_result:
                 counter+=1
