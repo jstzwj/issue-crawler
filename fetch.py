@@ -41,8 +41,9 @@ if __name__ == "__main__":
     pass
     # fetch_repo('https://github.com/denoland/deno.git', './data/deno')
     # fetch_repo('godot', '/godotengine/godot', 'https://github.com/godotengine/godot.git', './data/godot')
-    fetch_repo('https://github.com/GumTreeDiff/gumtree.git', './data/gumtree')
+    # fetch_repo('https://github.com/GumTreeDiff/gumtree.git', './data/gumtree')
     # fetch_repo('https://github.com/glfw/glfw.git', './data/glfw')
     # fetch_repo('https://github.com/ray-project/ray.git', './data/ray')
     # fetch_repo('https://github.com/yegord/snowman.git', './data/snowman')
     # fetch_repo('https://github.com/FreeRDP/FreeRDP.git', './data/FreeRDP')
+    fetch_repo('https://github.com/java-decompiler/jd-gui.git', './data/jd-gui')

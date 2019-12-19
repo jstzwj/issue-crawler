@@ -3,8 +3,12 @@ import numpy
 import tqdm
 import recommend
 
+from scipy.spatial.distance import cosine
 
-class StarBasedRecommendModel(recommend.RecommendModel):
+from sentence_transformers import SentenceTransformer
+
+
+class IssueSimilarityBasedRecommendModel(recommend.RecommendModel):
     def __init__(self, project):
         self.project = project
         self.issues = project.get_issues()
@@ -34,65 +38,45 @@ class StarBasedRecommendModel(recommend.RecommendModel):
         # print(rate_matrix)
         return rate_matrix
 
-    def get_user_similarity(self, left_index, right_index):
-        user_left = self.users[left_index]
-        user_right = self.users[right_index]
-        star_map = {}
-        for each_star in user_left['star']:
-            if each_star not in star_map:
-                star_map[each_star] = len(star_map)
+    def get_issue_similarity_matrix(self):
+        issue_simil_matrix = numpy.zeros((len(self.issues), len(self.issues)))
 
-        for each_star in user_right['star']:
-            if each_star not in star_map:
-                star_map[each_star] = len(star_map)
+        issue_title = []
+        for each_issue in self.issues:
+            issue_title.append(each_issue['title'])
 
-        left_vec = numpy.zeros((len(star_map) + 1))
-        right_vec = numpy.zeros((len(star_map) + 1))
-        
-        for each_star in user_left['star']:
-            left_vec[star_map[each_star]] = 1
-        left_vec[len(star_map)] = 1
+        model = SentenceTransformer('bert-base-nli-mean-tokens')
+        sentence_embeddings = model.encode(issue_title)
 
-        for each_star in user_right['star']:
-            right_vec[star_map[each_star]] = 1
-        right_vec[len(star_map)] = 1
+        for i in range(len(self.issues)):
+            for j in range(i + 1):
+                if i == j:
+                    issue_simil_matrix[i, j] = 1
+                else:
+                    issue_simil_matrix[i, j] = issue_simil_matrix[j, i] = 1 - cosine(sentence_embeddings[i], sentence_embeddings[j])
 
-        return numpy.dot(left_vec, right_vec)/(numpy.linalg.norm(left_vec)*numpy.linalg.norm(right_vec))
-
-    def get_user_similarity_matrix(self):
-        user_simil_matrix = numpy.zeros((len(self.users), len(self.users)))
-
-        with tqdm.tqdm(total=len(self.users)*len(self.users)//2) as pbar:
-            user_num = len(self.users)
-            for i in range(user_num):
-                for j in range(i + 1):
-                    if j > i:
-                        continue
-                    if i == j:
-                        user_simil_matrix[i, j] = 1
-                        continue
-                    tmp = self.get_user_similarity(i, j)
-                    user_simil_matrix[i, j] = tmp
-                    user_simil_matrix[j, i] = tmp
-                    pbar.update(1)
-
-        return user_simil_matrix
+        return issue_simil_matrix
 
     def train(self, train_data):
         self.train_data = train_data
-        self.user_similarity_matrix = self.get_user_similarity_matrix()
+        self.issue_similarity_matrix = self.get_issue_similarity_matrix()
         self.user_item_matrix = self.get_user_item_matrix(train_data)
-        self.prediction_matrix = self.user_similarity_matrix @ self.user_item_matrix
+
+        k = 30
+        for i in range(len(self.issues)):
+            ind = numpy.argsort(self.issue_similarity_matrix[:, i])
+            self.issue_similarity_matrix[ind[:-k],i] = 0
+
+        self.prediction_matrix = self.user_item_matrix @ self.issue_similarity_matrix
+
     def recommend(self, user_id, k):
         candidate_issues = self.prediction_matrix[user_id, :].tolist()
 
-        '''
         for each_data in self.train_data:
             if each_data[0] == user_id:
                 candidate_issues[each_data[1]] = 0
-        '''
 
-        '''
+
         # delete issue which active users are more than 2
         issue_user_count = {}
         for each_data in self.train_data:
@@ -100,10 +84,11 @@ class StarBasedRecommendModel(recommend.RecommendModel):
                 issue_user_count[each_data[1]] = 0
             issue_user_count[each_data[1]] += 1
 
+        # 评论人数特多的筛掉
         for each_issue, each_count in issue_user_count.items():
             if each_count > 1:
                 candidate_issues[each_issue] = 0
-        '''
+
         # sort and recommend
         sorted_orders = numpy.argsort(candidate_issues)
         # random.shuffle(candidate_issues)

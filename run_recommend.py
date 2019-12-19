@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from project import Project
 import recommend
 import model_star_based
+import model_issue_similarity_based
 
 def extract_recommend_dataset(project, end_time=None):
     ret = []
@@ -90,18 +91,18 @@ def valid(model, test_data, k):
 
     # valid
     counter = {}
-    precision = 0.0
-    recall = 0.0
+    precision_sum = 0.0
+    recall_sum = 0.0
     for each_user, data_list in test_users.items():
         recommend_result = model.recommend(each_user, k)
         counter[each_user] = 0
         for user_id, item_id, rate in data_list:
             if item_id in recommend_result:
                 counter[user_id] += 1
-        precision += counter[each_user] / k
-        recall += counter[each_user] / len(data_list)
-    precision = precision / len(test_users)
-    recall = recall / len(test_users)
+        precision_sum += counter[each_user] / k
+        recall_sum += counter[each_user] / len(data_list)
+    precision = precision_sum / len(test_users)
+    recall = recall_sum / len(test_users)
 
     correct_user_count = 0
     for each_user, correct_count in counter.items():
@@ -109,21 +110,23 @@ def valid(model, test_data, k):
             correct_user_count += 1
 
     print(f'accuracy: {correct_user_count}/{len(test_users)}, {correct_user_count/len(test_users)}')
-    print(f'precision: {precision}')
-    print(f'recall: {recall}')
+    print(f'precision: {precision * k} / {k}, {precision}')
+    print(f'recall: {recall * len(data_list)} / {len(data_list)}, {recall}')
     return correct_user_count/len(test_users), recall, precision
-    
+
 if __name__ == "__main__":
     project = Project()
     # project.load('./data/gumtree', '/GumTreeDiff/gumtree')
     # project.load('./data/deno', '/denoland/deno')
-    project.load('./data/FreeRDP', '/FreeRDP/FreeRDP')
+    # project.load('./data/FreeRDP', '/FreeRDP/FreeRDP')
+    project.load('./data/jd-gui', '/java-decompiler/jd-gui')
     dataset = extract_recommend_dataset(project)
     
     # model = RandomRecommendModel(project)
-    model = model_star_based.StarBasedRecommendModel(project)
-
-    x_list = [3, 5, 10, 20]
+    # model = model_star_based.StarBasedRecommendModel(project)
+    model = model_issue_similarity_based.IssueSimilarityBasedRecommendModel(project)
+    
+    x_list = [3, 5, 10, 20, 50]
     acc_plot = []
     prec_plot = []
     recall_plot = []
@@ -132,7 +135,7 @@ if __name__ == "__main__":
         accuracy_mean = []
         precision_mean = []
         recall_mean = []
-        for ex_count in range(10):
+        for ex_count in range(1):
             # split data
             train_data, test_data = dataset_split(dataset)
             # train
@@ -148,7 +151,7 @@ if __name__ == "__main__":
         prec_plot.append(numpy.mean(precision_mean))
         print(f'mean: acc:{numpy.mean(accuracy_mean)} recall:{numpy.mean(recall_mean)} prec:{numpy.mean(precision_mean)}')
     
-    plt.title("Issue recommend") 
+    plt.title("Issue recommend")
     plt.xlabel("x axis caption")
     plt.ylabel("y axis caption")
     plt.plot(x_list,acc_plot,"b", label='accuracy')

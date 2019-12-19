@@ -111,3 +111,4 @@ venv.bak/
 *.csv
 *.xlsx
 repos/
+bert_model/
