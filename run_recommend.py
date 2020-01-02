@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from project import Project
 import recommend
 import model_star_based
+import model_ucf
 import model_issue_similarity_based
 
 def extract_recommend_dataset(project, end_time=None):
@@ -145,6 +146,7 @@ if __name__ == "__main__":
     # model = RandomRecommendModel(project)
     # model = model_star_based.StarBasedRecommendModel(project)
     model = model_issue_similarity_based.IssueSimilarityBasedRecommendModel(project)
+    # model = model_ucf.UCFRecommendModel(project)
     
     x_list = [3, 5, 10, 20]
     acc_plot = []
@@ -155,7 +157,7 @@ if __name__ == "__main__":
         accuracy_mean = []
         precision_mean = []
         recall_mean = []
-        for ex_count in range(1):
+        for ex_count in range(10):
             # split data
             train_data, test_data = dataset_split(dataset)
             # train

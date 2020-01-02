@@ -62,17 +62,39 @@ class UCFRecommendModel(recommend.RecommendModel):
         # print(rate_matrix)
         return rate_matrix
 
+
+    def get_user_simil_matrix(self):
+        user_simil = numpy.zeros((len(self.users), len(self.users)))
+        for i in range(len(self.users)):
+            for j in range(i):
+                tmp = PearsonCorrelationSimilarity(self.user_item_matrix[i, :], self.user_item_matrix[j, :])
+                user_simil[i, j] = tmp
+                user_simil[j, i] = tmp
+            user_simil[i, i] = 1
+
+        return user_simil
+
+
     def train(self, train_data):
         self.train_data = train_data
-        self.issue_similarity_matrix = self.get_issue_similarity_matrix()
         self.user_item_matrix = self.get_user_item_matrix(train_data)
+        self.user_similarity_matrix = self.get_user_simil_matrix()
 
-        k = 30
-        for i in range(len(self.issues)):
-            ind = numpy.argsort(self.issue_similarity_matrix[:, i])
-            self.issue_similarity_matrix[ind[:-k],i] = 0
+        self.prediction_matrix = numpy.zeros((len(self.users), len(self.issues)))
 
-        self.prediction_matrix = self.user_item_matrix @ self.issue_similarity_matrix
+        k = 30 # most k simil users
+        for each_user in range(len(self.users)):
+            mean_rate = numpy.mean(self.user_item_matrix[each_user, :])
+            # U denotes the set of top N users that are most similar to user u
+            simil_user_sort = numpy.argsort(self.user_similarity_matrix[each_user, :])
+            
+            for each_issue in range(len(self.issues)):
+                simil_user_sum = 0
+                for each_simil_user in simil_user_sort:
+                    simil_user_sum += self.user_similarity_matrix[each_user, each_simil_user] * \
+                        (self.user_item_matrix[each_simil_user,each_issue] - numpy.mean(self.user_item_matrix[each_simil_user,:]))
+            
+                self.prediction_matrix[each_user, each_issue] = mean_rate + (1.0 / k) * simil_user_sum
 
     def recommend(self, user_id, k):
         candidate_issues = self.prediction_matrix[user_id, :].tolist()
