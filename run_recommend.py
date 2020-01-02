@@ -31,7 +31,7 @@ def extract_recommend_dataset(project, end_time=None):
             continue
         
         counter = {}
-        for each_timeline in each_issue['timeline'][1:]:
+        for each_timeline in each_issue['timeline']:
             if each_timeline == {}:
                 continue
             if 'time' not in each_timeline.keys():
@@ -47,9 +47,10 @@ def extract_recommend_dataset(project, end_time=None):
                 counter[each_timeline['author']] += 1
             else:
                 counter[each_timeline['author']] = 1
+
         for each_user, each_count in counter.items():
             if each_user is not None:
-                ret.append((users_meta[1][each_user], i, each_count/len(each_issue['timeline'][1:])))
+                ret.append((users_meta[1][each_user], i, each_count/len(each_issue['timeline'])))
 
     return ret
 
@@ -67,6 +68,7 @@ class RandomRecommendModel(recommend.RecommendModel):
         self.train_data = train_data
     def recommend(self, user_id, k):
         candidate_issues = list(range(len(self.issues)))
+        
         for each_data in self.train_data:
             if each_data[0] == user_id:
                 candidate_issues.remove(each_data[1])
@@ -110,23 +112,41 @@ def valid(model, test_data, k):
             correct_user_count += 1
 
     print(f'accuracy: {correct_user_count}/{len(test_users)}, {correct_user_count/len(test_users)}')
-    print(f'precision: {precision * k} / {k}, {precision}')
-    print(f'recall: {recall * len(data_list)} / {len(data_list)}, {recall}')
+    print(f'precision: {precision}')
+    print(f'recall: {recall}')
     return correct_user_count/len(test_users), recall, precision
 
 if __name__ == "__main__":
     project = Project()
-    # project.load('./data/gumtree', '/GumTreeDiff/gumtree')
+    project.load('./data/gumtree', '/GumTreeDiff/gumtree')
     # project.load('./data/deno', '/denoland/deno')
     # project.load('./data/FreeRDP', '/FreeRDP/FreeRDP')
-    project.load('./data/jd-gui', '/java-decompiler/jd-gui')
+    # project.load('./data/jd-gui', '/java-decompiler/jd-gui')
+    print(f'user number: {len(project.get_users())}')
+    print(f'issue number: {len(project.get_issues())}')
     dataset = extract_recommend_dataset(project)
+
+    # filter for new comer
+    filter_counter = {}
+    for each_data in dataset:
+        if each_data[0] not in filter_counter.keys():
+            filter_counter[each_data[0]] = []
+        filter_counter[each_data[0]].append(each_data)
+    
+    filtered_dataset = []
+    for each_user, data_list in filter_counter.items():
+        if len(data_list) > 2:
+            for each_data in data_list:
+                filtered_dataset.append(each_data)
+
+    dataset = filtered_dataset
+
     
     # model = RandomRecommendModel(project)
     # model = model_star_based.StarBasedRecommendModel(project)
     model = model_issue_similarity_based.IssueSimilarityBasedRecommendModel(project)
     
-    x_list = [3, 5, 10, 20, 50]
+    x_list = [3, 5, 10, 20]
     acc_plot = []
     prec_plot = []
     recall_plot = []

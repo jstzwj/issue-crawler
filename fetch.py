@@ -46,4 +46,6 @@ if __name__ == "__main__":
     # fetch_repo('https://github.com/ray-project/ray.git', './data/ray')
     # fetch_repo('https://github.com/yegord/snowman.git', './data/snowman')
     # fetch_repo('https://github.com/FreeRDP/FreeRDP.git', './data/FreeRDP')
-    fetch_repo('https://github.com/java-decompiler/jd-gui.git', './data/jd-gui')
+    # fetch_repo('https://github.com/java-decompiler/jd-gui.git', './data/jd-gui')
+    fetch_repo('https://github.com/UKPLab/sentence-transformers.git', './data/sentence-transformers')
+    
