@@ -39,7 +39,7 @@ def fetch_repo(url, save_path):
 
 if __name__ == "__main__":
     pass
-    # fetch_repo('https://github.com/denoland/deno.git', './data/deno')
+    fetch_repo('https://github.com/denoland/deno.git', './data/deno')
     # fetch_repo('godot', '/godotengine/godot', 'https://github.com/godotengine/godot.git', './data/godot')
     # fetch_repo('https://github.com/GumTreeDiff/gumtree.git', './data/gumtree')
     # fetch_repo('https://github.com/glfw/glfw.git', './data/glfw')
@@ -47,5 +47,5 @@ if __name__ == "__main__":
     # fetch_repo('https://github.com/yegord/snowman.git', './data/snowman')
     # fetch_repo('https://github.com/FreeRDP/FreeRDP.git', './data/FreeRDP')
     # fetch_repo('https://github.com/java-decompiler/jd-gui.git', './data/jd-gui')
-    fetch_repo('https://github.com/UKPLab/sentence-transformers.git', './data/sentence-transformers')
+    # fetch_repo('https://github.com/UKPLab/sentence-transformers.git', './data/sentence-transformers')
     

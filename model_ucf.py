@@ -103,7 +103,6 @@ class UCFRecommendModel(recommend.RecommendModel):
             if each_data[0] == user_id:
                 candidate_issues[each_data[1]] = 0
 
-
         # delete issue which active users are more than 2
         issue_user_count = {}
         for each_data in self.train_data:

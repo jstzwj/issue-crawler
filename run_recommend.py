@@ -117,7 +117,8 @@ def valid(model, test_data, k):
     print(f'recall: {recall}')
     return correct_user_count/len(test_users), recall, precision
 
-if __name__ == "__main__":
+
+def run_evaluation():
     project = Project()
     project.load('./data/gumtree', '/GumTreeDiff/gumtree')
     # project.load('./data/deno', '/denoland/deno')
@@ -128,6 +129,7 @@ if __name__ == "__main__":
     dataset = extract_recommend_dataset(project)
 
     # filter for new comer
+    '''
     filter_counter = {}
     for each_data in dataset:
         if each_data[0] not in filter_counter.keys():
@@ -141,14 +143,14 @@ if __name__ == "__main__":
                 filtered_dataset.append(each_data)
 
     dataset = filtered_dataset
+    '''
 
-    
     # model = RandomRecommendModel(project)
     # model = model_star_based.StarBasedRecommendModel(project)
     model = model_issue_similarity_based.IssueSimilarityBasedRecommendModel(project)
     # model = model_ucf.UCFRecommendModel(project)
     
-    x_list = [3, 5, 10, 20]
+    x_list = [3, 5, 10, 20, 40]
     acc_plot = []
     prec_plot = []
     recall_plot = []
@@ -174,12 +176,56 @@ if __name__ == "__main__":
         print(f'mean: acc:{numpy.mean(accuracy_mean)} recall:{numpy.mean(recall_mean)} prec:{numpy.mean(precision_mean)}')
     
     plt.title("Issue recommend")
-    plt.xlabel("x axis caption")
-    plt.ylabel("y axis caption")
+    plt.xlabel("recommend top k issues")
+    plt.ylabel("accuracy or recall or precision")
     plt.plot(x_list,acc_plot,"b", label='accuracy')
     plt.plot(x_list,recall_plot,"r", label='recall')
     plt.plot(x_list,prec_plot,"y", label='precision')
     plt.legend(loc='upper left')
     plt.show()
+
+
+def run_all_method_evaluation():
+    project = Project()
+    project.load('./data/gumtree', '/GumTreeDiff/gumtree')
+    print(f'user number: {len(project.get_users())}')
+    print(f'issue number: {len(project.get_issues())}')
+    dataset = extract_recommend_dataset(project)
+
+    models = []
+    models.append(RandomRecommendModel(project))
+    models.append(model_star_based.StarBasedRecommendModel(project))
+    models.append(model_issue_similarity_based.IssueSimilarityBasedRecommendModel(project))
+    models.append(model_ucf.UCFRecommendModel(project))
+    
+    x_list = [3, 5, 10, 20, 40]
+    
+    plt.title("Issue recommend")
+    plt.xlabel("recommend top k issues")
+    plt.ylabel("accuracy")
+
+    for each_model in models:
+        acc_plot = []
+        for each_k in x_list:
+            accuracy_mean = []
+            for ex_count in range(10):
+                # split data
+                train_data, test_data = dataset_split(dataset)
+                # train
+                each_model.train(train_data)
+                # valid
+                accuracy, recall, precision = valid(each_model, test_data, each_k)
+                accuracy_mean.append(accuracy)
+
+            acc_plot.append(numpy.mean(accuracy_mean))
+            print(f'mean: acc:{numpy.mean(accuracy_mean)}')
+        plt.plot(x_list,acc_plot, label=str(type(each_model)))
+    plt.legend(loc='upper left')
+    plt.show()
+
+
+if __name__ == "__main__":
+    # run_evaluation()
+    run_all_method_evaluation()
     
 
