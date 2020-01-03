@@ -39,6 +39,9 @@ class UCFRecommendModel(recommend.RecommendModel):
         self.users = project.get_users()
         self.build_acceleration_structure()
 
+    def get_name(self):
+        return 'UCF'
+
     def build_acceleration_structure(self):
         self.issues2id = {}
         self.id2issues = {}
@@ -90,7 +93,7 @@ class UCFRecommendModel(recommend.RecommendModel):
             
             for each_issue in range(len(self.issues)):
                 simil_user_sum = 0
-                for each_simil_user in simil_user_sort:
+                for each_simil_user in simil_user_sort[-k:]:
                     simil_user_sum += self.user_similarity_matrix[each_user, each_simil_user] * \
                         (self.user_item_matrix[each_simil_user,each_issue] - numpy.mean(self.user_item_matrix[each_simil_user,:]))
             

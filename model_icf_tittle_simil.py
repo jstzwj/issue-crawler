@@ -8,12 +8,15 @@ from scipy.spatial.distance import cosine
 from sentence_transformers import SentenceTransformer
 
 
-class IssueSimilarityBasedRecommendModel(recommend.RecommendModel):
+class ICFTittleSimilRecommendModel(recommend.RecommendModel):
     def __init__(self, project):
         self.project = project
         self.issues = project.get_issues()
         self.users = project.get_users()
         self.build_acceleration_structure()
+
+    def get_name(self):
+        return 'ICFTittleSimil'
 
     def build_acceleration_structure(self):
         self.issues2id = {}

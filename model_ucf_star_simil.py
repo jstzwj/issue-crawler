@@ -4,12 +4,15 @@ import tqdm
 import recommend
 
 
-class StarBasedRecommendModel(recommend.RecommendModel):
+class UCFStarSimilRecommendModel(recommend.RecommendModel):
     def __init__(self, project):
         self.project = project
         self.issues = project.get_issues()
         self.users = project.get_users()
         self.build_acceleration_structure()
+
+    def get_name(self):
+        return 'UCFStarSimil'
 
     def build_acceleration_structure(self):
         self.issues2id = {}

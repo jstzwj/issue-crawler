@@ -6,9 +6,10 @@ import random
 from matplotlib import pyplot as plt 
 from project import Project
 import recommend
-import model_star_based
+import model_icf_tittle_simil
 import model_ucf
-import model_issue_similarity_based
+import model_ucf_star_simil
+import model_random
 
 def extract_recommend_dataset(project, end_time=None):
     ret = []
@@ -60,22 +61,6 @@ def dataset_split(dataset):
     split_pos = int(length*0.6)
     random.shuffle(dataset)
     return dataset[:split_pos], dataset[split_pos:]
-
-class RandomRecommendModel(recommend.RecommendModel):
-    def __init__(self, project):
-        self.issues = project.get_issues()
-        self.users = project.get_users()
-    def train(self, train_data):
-        self.train_data = train_data
-    def recommend(self, user_id, k):
-        candidate_issues = list(range(len(self.issues)))
-        
-        for each_data in self.train_data:
-            if each_data[0] == user_id:
-                candidate_issues.remove(each_data[1])
-
-        random.shuffle(candidate_issues)
-        return candidate_issues[:k]
 
 def valid(model, test_data, k):
     # test data acceleration structure
@@ -147,8 +132,8 @@ def run_evaluation():
 
     # model = RandomRecommendModel(project)
     # model = model_star_based.StarBasedRecommendModel(project)
-    model = model_issue_similarity_based.IssueSimilarityBasedRecommendModel(project)
-    # model = model_ucf.UCFRecommendModel(project)
+    # model = model_issue_similarity_based.IssueSimilarityBasedRecommendModel(project)
+    model = model_ucf.UCFRecommendModel(project)
     
     x_list = [3, 5, 10, 20, 40]
     acc_plot = []
@@ -193,9 +178,9 @@ def run_all_method_evaluation():
     dataset = extract_recommend_dataset(project)
 
     models = []
-    models.append(RandomRecommendModel(project))
-    models.append(model_star_based.StarBasedRecommendModel(project))
-    models.append(model_issue_similarity_based.IssueSimilarityBasedRecommendModel(project))
+    models.append(model_random.RandomRecommendModel(project))
+    models.append(model_ucf_star_simil.UCFStarSimilRecommendModel(project))
+    models.append(model_icf_tittle_simil.ICFTittleSimilRecommendModel(project))
     models.append(model_ucf.UCFRecommendModel(project))
     
     x_list = [3, 5, 10, 20, 40]
@@ -219,7 +204,7 @@ def run_all_method_evaluation():
 
             acc_plot.append(numpy.mean(accuracy_mean))
             print(f'mean: acc:{numpy.mean(accuracy_mean)}')
-        plt.plot(x_list,acc_plot, label=str(type(each_model)))
+        plt.plot(x_list,acc_plot, label=each_model.get_name())
     plt.legend(loc='upper left')
     plt.show()
 
