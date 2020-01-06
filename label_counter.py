@@ -7,6 +7,7 @@ from lxml import etree
 import time
 import datetime
 import json
+import random
 
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, o):
@@ -55,6 +56,7 @@ class Crawler(object):
 
     def save_item(self, item):
         self.file.write(json.dumps(item, cls=DateTimeEncoder) + "\n")
+        self.file.flush()
 
     def request(self, url, fn, meta=None):
         self.requests_list.append(Request(url, fn, meta))
@@ -108,22 +110,22 @@ class Crawler(object):
             self.request(next, self.get_following, meta)
         else:
             # get more users
-            for each in meta:
-                if each not in self.user_filter:
-                    self.request(f'https://github.com/{each}', self.get_user)
-                    self.user_filter.add(each)
+            if len(meta > 100):
+                samples = random.sample(meta, 10)
+                for each in samples:
+                    if each not in self.user_filter:
+                        self.request(f'https://github.com/{each}', self.get_user)
+                        self.user_filter.add(each)
 
     def get_star(self, url, meta):
         html_root = self.request_page(url)
         for each in html_root.xpath('//div[@class="d-inline-block mb-1"]/h3/a/@href'):
-            meta.append(each)
+            if each not in self.repo_filter:
+                self.request('https://github.com{repo}'.format(repo=each), self.get_repo, meta = {'repo': each})
+                self.repo_filter.add(each)
 
         pagination = first(html_root.xpath('//div[@class="paginate-container"]'))
         if pagination is None:
-            for each_repo in meta:
-                if each_repo not in self.repo_filter:
-                    self.request('https://github.com{repo}'.format(repo=each_repo), self.get_repo, meta = {'repo': each_repo})
-                    self.repo_filter.add(each_repo)
             return
         previous = first(pagination.xpath('.//a[text()="Previous"]/@href'))
         next = first(pagination.xpath('.//a[text()="Next"]/@href'))
@@ -131,19 +133,15 @@ class Crawler(object):
         if next is not None:
             print(next)
             self.request(next, self.get_star, meta)
-        else:
-            for each_repo in meta:
-                if each_repo not in self.repo_filter:
-                    self.request('https://github.com{repo}'.format(repo=each_repo), self.get_repo, meta = {'repo': each_repo})
-                    self.repo_filter.add(each_repo)
 
     def get_repo(self, url, meta):
         print('get repo:' + meta['repo'])
         self.request(url + '/labels', self.get_label, meta = meta)
 
     def get_label(self, url, meta):
+        print('get label:' + meta['repo'])
         html_root = self.request_page(url)
-        labels = html_root.xpath('//a[@class="IssueLabel--big d-inline-block v-align-top lh-condensed js-label-link"]')
+        labels = html_root.xpath('//a[@class="IssueLabel--big d-inline-block v-align-top lh-condensed js-label-link"]/span/text()')
         meta['labels'] = labels
         self.save_item(meta)
 
