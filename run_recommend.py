@@ -172,7 +172,8 @@ def run_evaluation():
 
 def run_all_method_evaluation():
     project = Project()
-    project.load('./data/gumtree', '/GumTreeDiff/gumtree')
+    # project.load('./data/gumtree', '/GumTreeDiff/gumtree')
+    project.load('./data/deno', '/denoland/deno')
     print(f'user number: {len(project.get_users())}')
     print(f'issue number: {len(project.get_issues())}')
     dataset = extract_recommend_dataset(project)
