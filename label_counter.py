@@ -15,65 +15,11 @@ class DateTimeEncoder(json.JSONEncoder):
 
         return json.JSONEncoder.default(self, o)
 
-async def parse_html(html):
-    loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, lambda :etree.HTML(html))
-    return result
-
-class GithubSpider(solavis.Spider):
-    start_urls = ['https://github.com/jstzwj']
-    def __init__(self):
-        pass
-
-    async def parse(self, response):
-        html = response.text
-        # print(response.status)
-        html_root = await parse_html(html)
-
-        # get following
-        await self.request(response.url + "?tab=following", self.parse_following)
-
-    async def parse_following(self, response):
-        html = response.text
-        html_root = await parse_html(html)
-
-        for each in html_root.xpath('//span[@class="link-gray pl-1"]/text()'):
-            await self.request(each, self.parse)
-
-        pagination = response.xpath('//div[@class="paginate-container"]')
-        previous = pagination.xpath('.//a[text()="Previous"]/@href').get()
-        next = pagination.xpath('.//a[text()="Next"]/@href').get()
-
-        if next is not None:
-            print(next)
-            await self.request(next, self.parse_following)
-        else:
-            # get more users
-            for each in user_data['following']:
-                yield scrapy.Request(url='https://github.com/{login}'.format(login=each),
-                callback=self.parse,
-                dont_filter=False)
-
-            user_data['scraped_time'] = datetime.now()
-            yield user_data
-
-    async def parse_star(self, response):
-        pass
-
-class JsonPipeline(solavis.Pipeline):
-    def __init__(self):
-        pass
-
-    async def open_spider(self):
-        self.save_path = "items.txt"
-        self.file = open(self.save_path, 'w', encoding='utf-8')
-
-    async def close_spider(self):
-        self.file.close()
-
-    async def process_item(self, item):
-        self.file.write(json.dumps(item, cls=DateTimeEncoder) + "\n")
-
+def first(item):
+    if item is not None and len(item) > 0:
+        return item[0]
+    else:
+        return None
 
 proxies = {'http' : 'http://localhost:10805', 'https': 'https://localhost:10805'}
 
@@ -97,6 +43,7 @@ class Crawler(object):
         self.repo_filter = set()
         self.user_filter = set()
         self.file = open(self.save_path, 'w', encoding='utf-8')
+        self.debug = False
 
     def __del__(self):
         self.file.close()
@@ -119,11 +66,14 @@ class Crawler(object):
             while True:
                 if len(self.requests_list) > 0 :
                     req = self.requests_list.pop(0)
-                    try:
+                    if self.debug:
                         req.crawl()
-                    except Exception as e:
-                        print(e)
-                        self.requests_list.append(req)
+                    else:
+                        try:
+                            req.crawl()
+                        except Exception as e:
+                            print(e)
+                            self.requests_list.append(req)
                 else:
                     break
                 time.sleep(1)
@@ -134,18 +84,24 @@ class Crawler(object):
 
 
     def get_user(self, url, meta):
-        self.request(url + '?tab=following', self.get_following, [])
         self.request(url + '?tab=stars', self.get_star, [])
+        self.request(url + '?tab=following', self.get_following, [])
 
     def get_following(self, url, meta):
         html_root = self.request_page(url)
         for each in html_root.xpath('//span[@class="link-gray pl-1"]/text()'):
             meta.append(each)
-            self.request(each, self.get_user)
+            self.request(f'https://github.com/{each}', self.get_user)
 
-        pagination = html_root.xpath('//div[@class="paginate-container"]')
-        previous = pagination.xpath('.//a[text()="Previous"]/@href').get()
-        next = pagination.xpath('.//a[text()="Next"]/@href').get()
+        pagination = first(html_root.xpath('//div[@class="paginate-container"]'))
+        if pagination is None:
+            for each in meta:
+                if each not in self.user_filter:
+                    self.request(f'https://github.com/{each}', self.get_user)
+                    self.user_filter.add(each)
+            return
+        previous = first(pagination.xpath('.//a[text()="Previous"]/@href'))
+        next = first(pagination.xpath('.//a[text()="Next"]/@href'))
 
         if next is not None:
             print(next)
@@ -162,9 +118,15 @@ class Crawler(object):
         for each in html_root.xpath('//div[@class="d-inline-block mb-1"]/h3/a/@href'):
             meta.append(each)
 
-        pagination = html_root.xpath('//div[@class="paginate-container"]')
-        previous = pagination.xpath('.//a[text()="Previous"]/@href').get()
-        next = pagination.xpath('.//a[text()="Next"]/@href').get()
+        pagination = first(html_root.xpath('//div[@class="paginate-container"]'))
+        if pagination is None:
+            for each_repo in meta:
+                if each_repo not in self.repo_filter:
+                    self.request('https://github.com{repo}'.format(repo=each_repo), self.get_repo, meta = {'repo': each_repo})
+                    self.repo_filter.add(each_repo)
+            return
+        previous = first(pagination.xpath('.//a[text()="Previous"]/@href'))
+        next = first(pagination.xpath('.//a[text()="Next"]/@href'))
 
         if next is not None:
             print(next)
@@ -176,6 +138,7 @@ class Crawler(object):
                     self.repo_filter.add(each_repo)
 
     def get_repo(self, url, meta):
+        print('get repo:' + meta['repo'])
         self.request(url + '/labels', self.get_label, meta = meta)
 
     def get_label(self, url, meta):
